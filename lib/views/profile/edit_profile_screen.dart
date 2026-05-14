@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/app_colors.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -16,6 +18,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   bool _isLoading = false;
+  File? _pickedImage;
 
   @override
   void initState() {
@@ -30,6 +33,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _emailController.text = prefs.getString('email') ?? '';
       _phoneController.text = prefs.getString('phone') ?? '';
     });
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _pickedImage = File(image.path);
+      });
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -181,20 +194,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Column(
           children: [
             Center(
-              child: CircleAvatar(
-                radius: 60,
-                backgroundColor: AppColors.primary,
-                child: Text(
-                  _nameController.text.isNotEmpty
-                      ? _nameController.text[0].toUpperCase()
-                      : '?',
-                  style: const TextStyle(
-                    fontSize: 40,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundColor: AppColors.primary,
+                        backgroundImage: _pickedImage != null ? FileImage(_pickedImage!) : null,
+                        child: _pickedImage == null
+                            ? Text(
+                                _nameController.text.isNotEmpty
+                                    ? _nameController.text[0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  fontSize: 40,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 4,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: const Icon(Icons.edit, color: AppColors.primary, size: 24),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
             ),
             const SizedBox(height: 32),
 
