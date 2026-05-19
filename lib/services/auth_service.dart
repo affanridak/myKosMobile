@@ -14,7 +14,9 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  final String _baseUrl = 'https://chess-gore-patience.ngrok-free.dev/api';
+  // final String _baseUrl = 'https://chess-gore-patience.ngrok-free.dev/api';
+  // For Android emulator use 10.0.2.2 to reach host machine
+  final String _baseUrl = 'http://10.0.2.2:8000/api';
   final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -24,16 +26,20 @@ class AuthService {
   String? _token;
   String? get token => _token;
 
-  Future<void> saveUser(String token, String name, String email, String role,
-      {String? phone}) async {
+  Future<void> saveUser(
+    String token,
+    String name,
+    String email,
+    String role, {
+    String? phone,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
     await prefs.setString('name', name);
     await prefs.setString('email', email);
     await prefs.setString('role', role);
     await prefs.setString('phone', phone ?? '');
-    await prefs.setInt(
-        'login_at', DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt('login_at', DateTime.now().millisecondsSinceEpoch);
     _token = token;
   }
 
@@ -90,12 +96,15 @@ class AuthService {
           phone: data['user']['phone'],
         );
         return AuthResult(
-            success: true,
-            message: data['message'] ?? 'Login berhasil',
-            token: data['token']);
+          success: true,
+          message: data['message'] ?? 'Login berhasil',
+          token: data['token'],
+        );
       } else {
         return AuthResult(
-            success: false, message: data['message'] ?? 'Login gagal');
+          success: false,
+          message: data['message'] ?? 'Login gagal',
+        );
       }
     } catch (e) {
       return AuthResult(success: false, message: 'Terjadi kesalahan jaringan');
@@ -103,7 +112,10 @@ class AuthService {
   }
 
   Future<AuthResult> register(
-      String name, String email, String password) async {
+    String name,
+    String email,
+    String password,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/register'),
@@ -112,17 +124,20 @@ class AuthService {
           'name': name,
           'email': email,
           'password': password,
-          'password_confirmation': password
+          'password_confirmation': password,
         }),
       );
       final data = jsonDecode(response.body);
       if (response.statusCode == 201) {
         return AuthResult(
-            success: true,
-            message: data['message'] ?? 'Pendaftaran berhasil');
+          success: true,
+          message: data['message'] ?? 'Pendaftaran berhasil',
+        );
       } else {
         return AuthResult(
-            success: false, message: data['message'] ?? 'Pendaftaran gagal');
+          success: false,
+          message: data['message'] ?? 'Pendaftaran gagal',
+        );
       }
     } catch (e) {
       return AuthResult(success: false, message: 'Terjadi kesalahan jaringan');
@@ -139,10 +154,14 @@ class AuthService {
       final data = jsonDecode(response.body);
       if (response.statusCode == 200) {
         return AuthResult(
-            success: true, message: data['message'] ?? 'OTP terkirim');
+          success: true,
+          message: data['message'] ?? 'OTP terkirim',
+        );
       } else {
         return AuthResult(
-            success: false, message: data['message'] ?? 'Gagal kirim OTP');
+          success: false,
+          message: data['message'] ?? 'Gagal kirim OTP',
+        );
       }
     } catch (e) {
       return AuthResult(success: false, message: 'Terjadi kesalahan jaringan');
@@ -159,10 +178,14 @@ class AuthService {
       final data = jsonDecode(response.body);
       if (response.statusCode == 200) {
         return AuthResult(
-            success: true, message: data['message'] ?? 'OTP terverifikasi');
+          success: true,
+          message: data['message'] ?? 'OTP terverifikasi',
+        );
       } else {
         return AuthResult(
-            success: false, message: data['message'] ?? 'OTP tidak valid');
+          success: false,
+          message: data['message'] ?? 'OTP tidak valid',
+        );
       }
     } catch (e) {
       return AuthResult(success: false, message: 'Terjadi kesalahan jaringan');
@@ -177,18 +200,20 @@ class AuthService {
         body: jsonEncode({
           'email': email,
           'password': newPassword,
-          'password_confirmation': newPassword
+          'password_confirmation': newPassword,
         }),
       );
       final data = jsonDecode(response.body);
       if (response.statusCode == 200) {
         return AuthResult(
-            success: true,
-            message: data['message'] ?? 'Password berhasil diubah');
+          success: true,
+          message: data['message'] ?? 'Password berhasil diubah',
+        );
       } else {
         return AuthResult(
-            success: false,
-            message: data['message'] ?? 'Gagal ubah password');
+          success: false,
+          message: data['message'] ?? 'Gagal ubah password',
+        );
       }
     } catch (e) {
       return AuthResult(success: false, message: 'Terjadi kesalahan jaringan');
@@ -196,48 +221,42 @@ class AuthService {
   }
 
   Future<void> fetchAndSaveUserFromApi() async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-    if (token == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return;
 
-    final response = await http.get(
-      Uri.parse('$_baseUrl/user'),
-      headers: {
-        ..._headers,
-        'Authorization': 'Bearer $token',
-      },
-    );
+      final response = await http.get(
+        Uri.parse('$_baseUrl/user'),
+        headers: {..._headers, 'Authorization': 'Bearer $token'},
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await prefs.setString('name', data['name'] ?? '');
-      await prefs.setString('email', data['email'] ?? '');
-      await prefs.setString('role', data['role'] ?? 'tenant');
-      await prefs.setString('phone', data['phone'] ?? '');
-      await prefs.setString('avatar', data['avatar'] ?? '');
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        await prefs.setString('name', data['name'] ?? '');
+        await prefs.setString('email', data['email'] ?? '');
+        await prefs.setString('role', data['role'] ?? 'tenant');
+        await prefs.setString('phone', data['phone'] ?? '');
+        await prefs.setString('avatar', data['avatar'] ?? '');
+      }
+    } catch (e) {
+      //
     }
-  } catch (e) {
-    //
   }
-}
 
   Future<void> logout() async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-    if (token != null) {
-      await http.post(
-        Uri.parse('$_baseUrl/logout'),
-        headers: {
-          ..._headers,
-          'Authorization': 'Bearer $token',
-        },
-      );
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token != null) {
+        await http.post(
+          Uri.parse('$_baseUrl/logout'),
+          headers: {..._headers, 'Authorization': 'Bearer $token'},
+        );
+      }
+    } catch (e) {
+      //
     }
-  } catch (e) {
-    //
+    await clearUser();
   }
-  await clearUser();
-}
 }
