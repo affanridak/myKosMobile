@@ -4,7 +4,6 @@ import '../../theme/app_colors.dart';
 import '../../models/kost_model.dart';
 import '../../services/kost_service.dart';
 import '../search/search_screen.dart';
-import '../payment/checkout_screen.dart';
 import '../detail/detail_screen.dart';
 
 class MyKostScreen extends StatefulWidget {
@@ -30,7 +29,7 @@ class _MyKostScreenState extends State<MyKostScreen> {
 
   Future<void> _fetchContracts() async {
     setState(() => _isLoading = true);
-    final data = await _kostService.getMyContracts();
+    final data = await _kostService.getContracts();
     setState(() {
       _contracts = data;
       _isLoading = false;
@@ -56,6 +55,7 @@ class _MyKostScreenState extends State<MyKostScreen> {
       description: p['description'],
       latitude: (p['latitude'] ?? 0).toDouble(),
       longitude: (p['longitude'] ?? 0).toDouble(),
+      rentalType: p['rental_type'] ?? 'monthly',
     );
   }
 
@@ -175,6 +175,8 @@ class _MyKostScreenState extends State<MyKostScreen> {
                             final kost = _contractToKost(contract);
                             final statusText = contract['status'] as String;
                             final statusColor = statusText == 'Aktif' ? Colors.green : Colors.grey;
+                            final int contractId = contract['id'] ?? 0;
+                            final bool hasReviewed = contract['has_review'] ?? false;
 
                             return GestureDetector(
                               onTap: () => Get.to(() => DetailScreen(kost: kost)),
@@ -239,21 +241,17 @@ class _MyKostScreenState extends State<MyKostScreen> {
                                                   ),
                                                 ),
                                               ),
-                                              PopupMenuButton<String>(
-                                                icon: const Icon(Icons.more_vert, size: 20, color: AppColors.textSecondary),
+                                              IconButton(
+                                                icon: Icon(
+                                                  hasReviewed ? Icons.star : Icons.star_border,
+                                                  size: 22,
+                                                  color: AppColors.warning,
+                                                ),
                                                 padding: EdgeInsets.zero,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                onSelected: (value) {
-                                                  if (value == 'perpanjang') {
-                                                    Get.to(() => CheckoutScreen(kost: kost));
-                                                  } else if (value == 'ulasan') {
-                                                    _showUlasanDialog();
-                                                  }
-                                                },
-                                                itemBuilder: (context) => [
-                                                  const PopupMenuItem(value: 'perpanjang', child: Text('Perpanjang Sewa')),
-                                                  const PopupMenuItem(value: 'ulasan', child: Text('Beri Ulasan')),
-                                                ],
+                                                constraints: const BoxConstraints(),
+                                                onPressed: hasReviewed 
+                                                    ? null 
+                                                    : () => _showUlasanDialog(contractId),
                                               ),
                                             ],
                                           ),
@@ -305,8 +303,10 @@ class _MyKostScreenState extends State<MyKostScreen> {
     );
   }
 
-  void _showUlasanDialog() {
+  void _showUlasanDialog(int contractId) {
     int currentRating = 0;
+    final TextEditingController commentController = TextEditingController();
+
     Get.dialog(
       Dialog(
         backgroundColor: Colors.white,
@@ -337,6 +337,7 @@ class _MyKostScreenState extends State<MyKostScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextField(
+                    controller: commentController,
                     maxLines: 3,
                     decoration: InputDecoration(
                       hintText: 'Bagikan pengalaman Anda...',
@@ -368,10 +369,29 @@ class _MyKostScreenState extends State<MyKostScreen> {
                             backgroundColor: AppColors.primary,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          onPressed: () {
+                          onPressed: () async {
+                            if (currentRating == 0) {
+                              Get.snackbar('Peringatan', 'Silakan pilih rating terlebih dahulu',
+                                  backgroundColor: Colors.orange, colorText: Colors.white);
+                              return;
+                            }
+
                             Get.back();
-                            Get.snackbar('Sukses', 'Terima kasih atas ulasan Anda!',
-                                backgroundColor: Colors.green, colorText: Colors.white);
+                            
+                            final result = await _kostService.submitReview(
+                              contractId: contractId,
+                              rating: currentRating,
+                              comment: commentController.text,
+                            );
+
+                            if (result['success'] == true) {
+                              Get.snackbar('Sukses', 'Terima kasih atas ulasan Anda!',
+                                  backgroundColor: Colors.green, colorText: Colors.white);
+                              _fetchContracts();
+                            } else {
+                              Get.snackbar('Gagal', result['message'] ?? 'Gagal mengirim ulasan',
+                                  backgroundColor: Colors.red, colorText: Colors.white);
+                            }
                           },
                           child: const Text('Kirim', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                         ),

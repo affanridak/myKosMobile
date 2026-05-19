@@ -86,7 +86,6 @@ class HomeController extends GetxController {
 
       filteredKosts.sort((a, b) => a.price.compareTo(b.price));
     }
-    // PUTRA / PUTRI / CAMPURAN
     else {
       filteredKosts.value = allKosts.where((kost) {
         return kost.type.toLowerCase() == filter.toLowerCase();

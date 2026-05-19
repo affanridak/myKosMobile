@@ -10,11 +10,13 @@ class Kost {
   final String? description;
   final double latitude;
   final double longitude;
+  final String rentalType;
   double distance;
 
   Kost({
     required this.id,
     required this.name,
+
     required this.address,
     required this.city,
     required this.imageUrl,
@@ -24,6 +26,7 @@ class Kost {
     this.description,
     required this.latitude,
     required this.longitude,
+    required this.rentalType,
     this.distance = 0,
   });
 
@@ -40,10 +43,9 @@ class Kost {
       type: json['type'] ?? '-',
       rating: (json['rating'] ?? 0).toDouble(),
       description: json['description'],
-      latitude:
-          double.tryParse(json['latitude'].toString()) ?? 0.0,
-      longitude:
-          double.tryParse(json['longitude'].toString()) ?? 0.0,
+      latitude: double.tryParse(json['latitude'].toString()) ?? 0.0,
+      longitude: double.tryParse(json['longitude'].toString()) ?? 0.0,
+      rentalType: json['rental_type'] ?? 'monthly',
     );
   }
 }

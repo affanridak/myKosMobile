@@ -60,11 +60,11 @@ class KostService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getMyContracts() async {
+  Future<List<Map<String, dynamic>>> getContracts() async {
     try {
       final headers = await _authHeaders();
       final response = await http.get(
-        Uri.parse('$_baseUrl/my-contracts'),
+        Uri.parse('$_baseUrl/contracts'),
         headers: headers,
       );
       if (response.statusCode == 200) {
@@ -74,6 +74,126 @@ class KostService {
       return [];
     } catch (e) {
       return [];
+    }
+  }
+
+  Future<bool> toggleWishlist(int propertyId) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.post(
+        Uri.parse('$_baseUrl/wishlists/toggle'),
+        headers: headers,
+        body: jsonEncode({'property_id': propertyId}),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['status'] == 'added';
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> checkWishlist(int propertyId) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse('$_baseUrl/wishlists/check/$propertyId'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['is_favorite'] ?? false;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getWishlists() async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse('$_baseUrl/wishlists'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> submitRentalRequest({
+    required int roomTypeId,
+    required String startDate,
+    required int durationValue,
+    required String durationType,
+    String? note,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.post(
+        Uri.parse('$_baseUrl/rental-requests'),
+        headers: headers,
+        body: jsonEncode({
+          'room_type_id': roomTypeId,
+          'start_date': startDate,
+          'duration_value': durationValue,
+          'duration_type': durationType,
+          'note': note ?? '',
+        }),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 201) {
+        return {'success': true, 'message': data['message']};
+      }
+      return {
+        'success': false,
+        'message': data['message'] ?? 'Gagal mengajukan sewa',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan jaringan'};
+    }
+  }
+
+  Future<Map<String, dynamic>> submitReview({
+    required int contractId,
+    required int rating,
+    required String comment,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.post(
+        Uri.parse('$_baseUrl/reviews'),
+        headers: headers,
+        body: jsonEncode({
+          'contract_id': contractId,
+          'rating': rating,
+          'comment': comment,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 201) {
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Ulasan berhasil dikirim',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': data['message'] ?? 'Gagal mengirim ulasan',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan jaringan'};
     }
   }
 }

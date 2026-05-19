@@ -6,8 +6,6 @@ import '../../models/kost_model.dart';
 import '../../services/kost_service.dart';
 import '../payment/checkout_screen.dart';
 import '../chat/chat_detail_screen.dart';
-import '../../models/cart_item_model.dart';
-import '../../controllers/cart_controller.dart';
 
 class DetailScreen extends StatefulWidget {
   final Kost kost;
@@ -19,8 +17,8 @@ class DetailScreen extends StatefulWidget {
 
 class _DetailScreenState extends State<DetailScreen> {
   int _currentImageIndex = 0;
-  bool _isFavorite = false;
   bool _isLoading = true;
+  bool _isAddingWishlist = false;
   Map<String, dynamic>? _detail;
 
   @override
@@ -47,18 +45,38 @@ class _DetailScreenState extends State<DetailScreen> {
     final lat = _detail?['latitude'];
     final lng = _detail?['longitude'];
     final name = Uri.encodeComponent(widget.kost.name);
-
     Uri uri;
     if (lat != null && lng != null) {
-      uri = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
-      );
+      uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
     } else {
       uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$name');
     }
-
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _addToWishlist() async {
+    setState(() => _isAddingWishlist = true);
+    try {
+      await KostService().toggleWishlist(widget.kost.id);
+      Get.snackbar(
+        'Berhasil',
+        'Kost ditambahkan ke Keranjang Saya',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Gagal',
+        'Gagal menambahkan ke daftar keinginan',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      setState(() => _isAddingWishlist = false);
     }
   }
 
@@ -79,39 +97,19 @@ class _DetailScreenState extends State<DetailScreen> {
                   leading: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: CircleAvatar(
-                      backgroundColor: Colors.white.withAlpha(
-                        (0.9 * 255).round(),
-                      ),
+                      backgroundColor: Colors.white.withAlpha((0.9 * 255).round()),
                       child: IconButton(
                         icon: const Icon(Icons.arrow_back, color: Colors.black),
                         onPressed: () => Get.back(),
                       ),
                     ),
                   ),
-                  actions: [
-                    CircleAvatar(
-                      backgroundColor: Colors.white.withAlpha(
-                        (0.9 * 255).round(),
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          _isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: _isFavorite ? Colors.red : Colors.black,
-                          size: 20,
-                        ),
-                        onPressed: () =>
-                            setState(() => _isFavorite = !_isFavorite),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                  ],
                   flexibleSpace: FlexibleSpaceBar(
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
                         PageView.builder(
-                          onPageChanged: (index) =>
-                              setState(() => _currentImageIndex = index),
+                          onPageChanged: (index) => setState(() => _currentImageIndex = index),
                           itemCount: _gallery.length,
                           itemBuilder: (context, index) {
                             final imagePath = _gallery[index];
@@ -130,15 +128,11 @@ class _DetailScreenState extends State<DetailScreen> {
                               _gallery.length,
                               (index) => AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
                                 height: 8,
                                 width: _currentImageIndex == index ? 24 : 8,
                                 decoration: BoxDecoration(
-                                  color: _currentImageIndex == index
-                                      ? Colors.white
-                                      : Colors.white54,
+                                  color: _currentImageIndex == index ? Colors.white : Colors.white54,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
@@ -153,9 +147,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   child: Container(
                     decoration: const BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(24),
-                      ),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                     ),
                     padding: const EdgeInsets.all(20.0),
                     child: Column(
@@ -163,80 +155,40 @@ class _DetailScreenState extends State<DetailScreen> {
                       children: [
                         Text(
                           kost.name,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            height: 1.3,
-                          ),
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, height: 1.3),
                         ),
                         const SizedBox(height: 8),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppColors.warning.withAlpha(
-                                  (0.15 * 255).round(),
-                                ),
+                                color: AppColors.warning.withAlpha((0.15 * 255).round()),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
-                                    Icons.star,
-                                    color: AppColors.warning,
-                                    size: 14,
-                                  ),
+                                  const Icon(Icons.star, color: AppColors.warning, size: 14),
                                   const SizedBox(width: 4),
-                                  Text(
-                                    '${kost.rating}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      color: AppColors.warning,
-                                    ),
-                                  ),
+                                  Text('${kost.rating}',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.warning)),
                                 ],
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              '(${_detail?['review_count'] ?? 0} ulasan)',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 13,
-                              ),
-                            ),
+                            Text('(${_detail?['review_count'] ?? 0} ulasan)',
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
                             const SizedBox(width: 12),
-                            Container(
-                              width: 4,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade400,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
+                            Container(width: 4, height: 4,
+                                decoration: BoxDecoration(color: Colors.grey.shade400, shape: BoxShape.circle)),
                             const SizedBox(width: 12),
-                            const Icon(
-                              Icons.location_on,
-                              color: AppColors.primary,
-                              size: 16,
-                            ),
+                            const Icon(Icons.location_on, color: AppColors.primary, size: 16),
                             const SizedBox(width: 4),
                             Expanded(
-                              child: Text(
-                                kost.location,
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 13,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              child: Text(kost.location,
+                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                                  maxLines: 1, overflow: TextOverflow.ellipsis),
                             ),
                           ],
                         ),
@@ -244,80 +196,29 @@ class _DetailScreenState extends State<DetailScreen> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text(
-                              'Rp${kost.price}',
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
+                            Text('Rp${kost.price}',
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primary)),
                             Padding(
                               padding: const EdgeInsets.only(bottom: 2),
-                              child: Text(
-                                ' /bulan',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
+                              child: Text(' /bulan', style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
                             ),
                           ],
                         ),
                         const SizedBox(height: 24),
-
-                        // Deskripsi
-                        const Text(
-                          'Deskripsi',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        const Text('Deskripsi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        Text(
-                          _detail?['description'] ?? kost.description ?? '-',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            height: 1.5,
-                          ),
-                        ),
-
-                        Divider(
-                          color: Colors.grey.shade100,
-                          thickness: 8,
-                          height: 48,
-                        ),
+                        Text(_detail?['description'] ?? kost.description ?? '-',
+                            style: const TextStyle(color: AppColors.textSecondary, height: 1.5)),
+                        Divider(color: Colors.grey.shade100, thickness: 8, height: 48),
                         _buildFasilitas(),
-
-                        Divider(
-                          color: Colors.grey.shade100,
-                          thickness: 8,
-                          height: 48,
-                        ),
+                        Divider(color: Colors.grey.shade100, thickness: 8, height: 48),
                         _buildPeraturan(),
-
-                        Divider(
-                          color: Colors.grey.shade100,
-                          thickness: 8,
-                          height: 48,
-                        ),
+                        Divider(color: Colors.grey.shade100, thickness: 8, height: 48),
                         _buildLokasi(),
-
-                        Divider(
-                          color: Colors.grey.shade100,
-                          thickness: 8,
-                          height: 48,
-                        ),
+                        Divider(color: Colors.grey.shade100, thickness: 8, height: 48),
                         _buildOwnerInfo(),
-
-                        Divider(
-                          color: Colors.grey.shade100,
-                          thickness: 8,
-                          height: 48,
-                        ),
+                        Divider(color: Colors.grey.shade100, thickness: 8, height: 48),
                         _buildUlasan(),
-
                         const SizedBox(height: 24),
                       ],
                     ),
@@ -329,13 +230,7 @@ class _DetailScreenState extends State<DetailScreen> {
         padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(
           color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, -2),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -2))],
         ),
         child: SafeArea(
           child: Row(
@@ -346,16 +241,11 @@ class _DetailScreenState extends State<DetailScreen> {
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     padding: EdgeInsets.zero,
                   ),
                   onPressed: () => Get.to(() => const ChatDetailScreen()),
-                  child: const Icon(
-                    Icons.chat_bubble_outline,
-                    color: AppColors.primary,
-                  ),
+                  child: const Icon(Icons.chat_bubble_outline, color: AppColors.primary),
                 ),
               ),
               const SizedBox(width: 12),
@@ -365,39 +255,16 @@ class _DetailScreenState extends State<DetailScreen> {
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     padding: EdgeInsets.zero,
                   ),
-                  onPressed: () {
-                    final cartC = Get.put(CartController());
-                    final exists = cartC.cartItems.any(
-                      (item) => item.kost.id == widget.kost.id,
-                    );
-                    if (exists) {
-                      Get.snackbar(
-                        'Info',
-                        'Kost ini sudah ada di keranjang',
-                        backgroundColor: Colors.blue,
-                        colorText: Colors.white,
-                      );
-                    } else {
-                      cartC.cartItems.add(
-                        CartItem(kost: widget.kost, duration: 1),
-                      );
-                      Get.snackbar(
-                        'Sukses',
-                        'Kost berhasil ditambahkan ke keranjang',
-                        backgroundColor: Colors.green,
-                        colorText: Colors.white,
-                      );
-                    }
-                  },
-                  child: const Icon(
-                    Icons.add_shopping_cart,
-                    color: AppColors.primary,
-                  ),
+                  onPressed: _isAddingWishlist ? null : _addToWishlist,
+                  child: _isAddingWishlist
+                      ? const SizedBox(
+                          width: 20, height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                        )
+                      : const Icon(Icons.bookmark_border, color: AppColors.primary),
                 ),
               ),
               const SizedBox(width: 12),
@@ -408,20 +275,11 @@ class _DetailScreenState extends State<DetailScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    onPressed: () =>
-                        Get.to(() => CheckoutScreen(kost: widget.kost)),
-                    child: const Text(
-                      'Sewa Sekarang',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    onPressed: () => Get.to(() => CheckoutScreen(kost: widget.kost)),
+                    child: const Text('Sewa Sekarang',
+                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
@@ -435,22 +293,12 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
-        ),
-      ),
+      child: Text(title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
     );
   }
 
-  Widget _buildListItem(
-    IconData icon,
-    String title, {
-    Color iconColor = AppColors.primary,
-  }) {
+  Widget _buildListItem(IconData icon, String title, {Color iconColor = AppColors.primary}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -458,56 +306,32 @@ class _DetailScreenState extends State<DetailScreen> {
         children: [
           Icon(icon, size: 20, color: iconColor),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                height: 1.4,
-              ),
-            ),
-          ),
+          Expanded(child: Text(title, style: const TextStyle(color: AppColors.textSecondary, height: 1.4))),
         ],
       ),
     );
   }
 
   Widget _buildFasilitas() {
-    final roomFacilities =
-        _detail?['room_types'] != null &&
-            (_detail!['room_types'] as List).isNotEmpty
-        ? List<String>.from(
-            (_detail!['room_types'][0]['room_facilities'] ?? []),
-          )
+    final roomFacilities = _detail?['room_types'] != null && (_detail!['room_types'] as List).isNotEmpty
+        ? List<String>.from((_detail!['room_types'][0]['room_facilities'] ?? []))
         : <String>[];
-    final propertyFacilities = List<String>.from(
-      _detail?['property_facilities'] ?? [],
-    );
+    final propertyFacilities = List<String>.from(_detail?['property_facilities'] ?? []);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Fasilitas'),
         if (roomFacilities.isNotEmpty) ...[
-          const Text(
-            'Fasilitas Kamar',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
+          const Text('Fasilitas Kamar',
+              style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
           const SizedBox(height: 8),
           ...roomFacilities.map((f) => _buildListItem(_facilityIcon(f), f)),
           const SizedBox(height: 16),
         ],
         if (propertyFacilities.isNotEmpty) ...[
-          const Text(
-            'Fasilitas Umum',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
+          const Text('Fasilitas Umum',
+              style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
           const SizedBox(height: 8),
           ...propertyFacilities.map((f) => _buildListItem(_facilityIcon(f), f)),
         ],
@@ -540,16 +364,8 @@ class _DetailScreenState extends State<DetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Peraturan Kost'),
-        ...rules
-            .toString()
-            .split('.')
-            .where((s) => s.trim().isNotEmpty)
-            .map(
-              (rule) => _buildListItem(
-                Icons.do_not_disturb_alt_outlined,
-                rule.trim(),
-                iconColor: Colors.red,
-              ),
+        ...rules.toString().split('.').where((s) => s.trim().isNotEmpty).map(
+              (rule) => _buildListItem(Icons.do_not_disturb_alt_outlined, rule.trim(), iconColor: Colors.red),
             ),
       ],
     );
@@ -558,7 +374,6 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget _buildLokasi() {
     final address = _detail?['address'] ?? widget.kost.address;
     final city = _detail?['city'] ?? widget.kost.city;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -567,15 +382,8 @@ class _DetailScreenState extends State<DetailScreen> {
           children: [
             const Icon(Icons.location_on, color: AppColors.primary, size: 18),
             const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                '$address, $city',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-            ),
+            Expanded(child: Text('$address, $city',
+                style: const TextStyle(color: AppColors.textSecondary, height: 1.5))),
           ],
         ),
         const SizedBox(height: 16),
@@ -589,8 +397,7 @@ class _DetailScreenState extends State<DetailScreen> {
               borderRadius: BorderRadius.circular(16),
               image: const DecorationImage(
                 image: NetworkImage(
-                  'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80',
-                ),
+                    'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -605,13 +412,8 @@ class _DetailScreenState extends State<DetailScreen> {
                   children: [
                     Icon(Icons.location_on, size: 40, color: Colors.red),
                     SizedBox(height: 8),
-                    Text(
-                      'Buka di Google Maps',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text('Buka di Google Maps',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -626,7 +428,6 @@ class _DetailScreenState extends State<DetailScreen> {
     final owner = _detail?['owner'];
     final name = owner?['name'] ?? '-';
     final phone = owner?['phone'] ?? '-';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -636,34 +437,18 @@ class _DetailScreenState extends State<DetailScreen> {
             CircleAvatar(
               radius: 28,
               backgroundColor: AppColors.primary.withAlpha((0.1 * 255).round()),
-              child: Text(
-                name.isNotEmpty ? name[0].toUpperCase() : '?',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
+              child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primary)),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
+                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 4),
-                  Text(
-                    phone.isNotEmpty && phone != '-'
-                        ? phone
-                        : 'Belum ada nomor HP',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                  ),
+                  Text(phone.isNotEmpty && phone != '-' ? phone : 'Belum ada nomor HP',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
                 ],
               ),
             ),
@@ -677,7 +462,6 @@ class _DetailScreenState extends State<DetailScreen> {
     final reviews = List<Map<String, dynamic>>.from(_detail?['reviews'] ?? []);
     final reviewCount = _detail?['review_count'] ?? 0;
     final avgRating = widget.kost.rating;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -694,51 +478,29 @@ class _DetailScreenState extends State<DetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
-                    Text(
-                      '$avgRating',
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        height: 1.0,
-                      ),
-                    ),
-                    const Text(
-                      ' / 5.0',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    Text('$avgRating',
+                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, height: 1.0)),
+                    const Text(' / 5.0',
+                        style: TextStyle(fontSize: 16, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'Berdasarkan $reviewCount ulasan',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
+                Text('Berdasarkan $reviewCount ulasan',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
               ],
             ),
           ],
         ),
         const SizedBox(height: 20),
         if (reviews.isEmpty)
-          const Text(
-            'Belum ada ulasan',
-            style: TextStyle(color: AppColors.textSecondary),
-          )
+          const Text('Belum ada ulasan', style: TextStyle(color: AppColors.textSecondary))
         else
-          ...reviews.map(
-            (review) => _buildReviewItem(
-              review['name'] ?? 'Anonim',
-              review['date'] ?? '',
-              (review['rating'] ?? 0).toInt(),
-              review['comment'] ?? '',
-            ),
-          ),
+          ...reviews.map((review) => _buildReviewItem(
+                review['name'] ?? 'Anonim',
+                review['date'] ?? '',
+                (review['rating'] ?? 0).toInt(),
+                review['comment'] ?? '',
+              )),
       ],
     );
   }
@@ -753,61 +515,26 @@ class _DetailScreenState extends State<DetailScreen> {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor: AppColors.primary.withAlpha(
-                  (0.1 * 255).round(),
-                ),
-                child: Text(
-                  name[0],
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
+                backgroundColor: AppColors.primary.withAlpha((0.1 * 255).round()),
+                child: Text(name[0],
+                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 16)),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      date,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
+                    Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(date, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
                   ],
                 ),
               ),
-              Row(
-                children: List.generate(
-                  5,
-                  (i) => Icon(
-                    i < rating ? Icons.star : Icons.star_border,
-                    color: AppColors.warning,
-                    size: 16,
-                  ),
-                ),
-              ),
+              Row(children: List.generate(5,
+                  (i) => Icon(i < rating ? Icons.star : Icons.star_border, color: AppColors.warning, size: 16))),
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            review,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-              height: 1.4,
-            ),
-          ),
+          Text(review, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4)),
         ],
       ),
     );

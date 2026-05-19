@@ -1,25 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../theme/app_colors.dart';
 import '../../models/kost_model.dart';
-import 'payment_method_screen.dart';
-
-class CheckoutController extends GetxController {
-  var duration = 1.obs; // durasi sewa dalam bulan
-
-  void increment() => duration++;
-  void decrement() {
-    if (duration > 1) duration--;
-  }
-}
+import '../../services/kost_service.dart';
+import '../../controllers/checkout_controller.dart';
 
 class CheckoutScreen extends StatelessWidget {
   final Kost kost;
   final CheckoutController controller = Get.put(CheckoutController());
 
   CheckoutScreen({super.key, required this.kost}) {
-    // Reset state durasi setiap kali halaman ini dibuka
     controller.duration.value = 1;
+    controller.selectedDate.value = DateTime.now();
+    controller.durationType.value = kost.rentalType; 
+    controller.selectedRoomTypeId.value = kost.id;
+  }
+
+  Future<void> _submitRentalRequest() async {
+    if (controller.selectedRoomTypeId.value == 0) {
+      Get.snackbar('Gagal', 'Tipe kamar tidak ditemukan',
+          backgroundColor: Colors.red, colorText: Colors.white);
+      return;
+    }
+
+    controller.isLoading.value = true;
+
+    final result = await KostService().submitRentalRequest(
+      roomTypeId: controller.selectedRoomTypeId.value,
+      startDate: DateFormat('yyyy-MM-dd').format(controller.selectedDate.value),
+      durationValue: controller.duration.value,
+      durationType: controller.durationType.value,
+    );
+
+    controller.isLoading.value = false;
+
+    if (result['success']) {
+      Get.back(result: true);
+      Get.snackbar(
+        'Berhasil! 🎉',
+        'Pengajuan sewa berhasil, menunggu persetujuan pemilik kost.',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+        snackPosition: SnackPosition.TOP,
+      );
+    } else {
+      Get.snackbar('Gagal', result['message'] ?? 'Terjadi kesalahan',
+          backgroundColor: Colors.red, colorText: Colors.white);
+    }
   }
 
   @override
@@ -36,10 +65,9 @@ class CheckoutScreen extends StatelessWidget {
         title: const Text(
           'Ringkasan Pesanan',
           style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -48,11 +76,8 @@ class CheckoutScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Info Kost Card
-            const Text(
-              'Informasi Kost',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
+            const Text('Informasi Kost',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(16),
@@ -66,12 +91,20 @@ class CheckoutScreen extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      kost.imageUrl,
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                    ),
+                    child: kost.imageUrl.startsWith('http')
+                        ? Image.network(kost.imageUrl,
+                            width: 80, height: 80, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                                  width: 80,
+                                  height: 80,
+                                  color: Colors.grey.shade200,
+                                  child: const Icon(Icons.home),
+                                ))
+                        : Container(
+                            width: 80,
+                            height: 80,
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.home)),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -80,53 +113,37 @@ class CheckoutScreen extends StatelessWidget {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withAlpha(
-                              (0.1 * 255).round(),
-                            ),
+                            color: AppColors.primary
+                                .withAlpha((0.1 * 255).round()),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            kost.type,
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: Text(kost.type,
+                              style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold)),
                         ),
                         const SizedBox(height: 6),
-                        Text(
-                          kost.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        Text(kost.name,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(
-                              Icons.location_on,
-                              size: 14,
-                              color: AppColors.textSecondary,
-                            ),
+                            const Icon(Icons.location_on,
+                                size: 14, color: AppColors.textSecondary),
                             const SizedBox(width: 4),
                             Expanded(
-                              child: Text(
-                                kost.location,
-                                style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 12,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              child: Text(kost.location,
+                                  style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis),
                             ),
                           ],
                         ),
@@ -137,73 +154,123 @@ class CheckoutScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-
-            // Detail Sewa
-            const Text(
-              'Detail Sewa',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
+            const Text('Detail Sewa',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 12),
-
-            // Tanggal Masuk (Simulasi)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
+            Obx(() => GestureDetector(
+                  onTap: () => controller.pickDate(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withAlpha((0.1 * 255).round()),
-                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
                     ),
-                    child: const Icon(
-                      Icons.calendar_month_outlined,
-                      color: Colors.blue,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'Tanggal Masuk',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.blue
+                                .withAlpha((0.1 * 255).round()),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.calendar_month_outlined,
+                              color: Colors.blue, size: 20),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Tanggal Masuk',
+                                  style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12)),
+                              const SizedBox(height: 4),
+                              Text(
+                                DateFormat('dd MMMM yyyy')
+                                    .format(controller.selectedDate.value),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                            ],
                           ),
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          '27 April 2026',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
+                        const Text('Ubah',
+                            style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13)),
                       ],
                     ),
                   ),
-                  const Text(
-                    'Ubah',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                )),
             const SizedBox(height: 12),
+            Obx(() {
+              List<Map<String, String>> availableTypes = [];
+              if (kost.rentalType == 'daily') {
+                availableTypes = [{'value': 'daily', 'label': 'Harian'}];
+              } else if (kost.rentalType == 'monthly') {
+                availableTypes = [{'value': 'monthly', 'label': 'Bulanan'}];
+              } else {
+                availableTypes = [
+                  {'value': 'monthly', 'label': 'Bulanan'},
+                  {'value': 'daily', 'label': 'Harian'},
+                ];
+              }
 
-            // Durasi Sewa
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withAlpha((0.1 * 255).round()),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.tune, color: Colors.orange, size: 20),
+                    ),
+                    const SizedBox(width: 16),
+                    const Text('Tipe Sewa',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    const Spacer(),
+                    ...availableTypes.map((type) {
+                      final isSelected = controller.durationType.value == type['value'];
+                      return GestureDetector(
+                        onTap: () => controller.setDurationType(type['value']!),
+                        child: Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? AppColors.primary : Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                            ),
+                          ),
+                          child: Text(
+                            type['label']!,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : AppColors.textSecondary,
+                              fontSize: 12,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -219,25 +286,14 @@ class CheckoutScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withAlpha(
-                            (0.1 * 255).round(),
-                          ),
+                          color: AppColors.primary.withAlpha((0.1 * 255).round()),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.access_time,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
+                        child: const Icon(Icons.access_time, color: AppColors.primary, size: 20),
                       ),
                       const SizedBox(width: 16),
-                      const Text(
-                        'Lama Sewa',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
+                      const Text('Lama Sewa',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                     ],
                   ),
                   Container(
@@ -254,15 +310,10 @@ class CheckoutScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(8),
                           constraints: const BoxConstraints(),
                         ),
-                        Obx(
-                          () => Text(
-                            '${controller.duration.value} Bln',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                        Obx(() => Text(
+                              '${controller.duration.value} ${controller.durationType.value == 'monthly' ? 'Bln' : 'Hari'}',
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            )),
                         IconButton(
                           icon: const Icon(Icons.add, size: 16),
                           color: AppColors.primary,
@@ -277,12 +328,8 @@ class CheckoutScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-
-            // Rincian Pembayaran
-            const Text(
-              'Rincian Pembayaran',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
+            const Text('Rincian Pembayaran',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(16),
@@ -292,24 +339,17 @@ class CheckoutScreen extends StatelessWidget {
                 border: Border.all(color: Colors.grey.shade200),
               ),
               child: Obx(() {
-                int total = kost.price * controller.duration.value;
-                int adminFee = 5000;
+                final int total = kost.price * controller.duration.value;
+                final String label = controller.durationType.value == 'monthly'
+                    ? '${controller.duration.value} Bulan'
+                    : '${controller.duration.value} Hari';
                 return Column(
                   children: [
-                    _buildReceiptRow(
-                      'Harga Sewa (${controller.duration.value} Bulan)',
-                      'Rp$total',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildReceiptRow('Biaya Admin', 'Rp$adminFee'),
+                    _buildReceiptRow('Harga Sewa ($label)', 'Rp$total'),
                     const SizedBox(height: 16),
                     Container(height: 1, color: Colors.grey.shade200),
                     const SizedBox(height: 16),
-                    _buildReceiptRow(
-                      'Total Pembayaran',
-                      'Rp${total + adminFee}',
-                      isTotal: true,
-                    ),
+                    _buildReceiptRow('Total Pembayaran', 'Rp$total', isTotal: true),
                   ],
                 );
               }),
@@ -322,11 +362,7 @@ class CheckoutScreen extends StatelessWidget {
         decoration: const BoxDecoration(
           color: Colors.white,
           boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, -5),
-            ),
+            BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5)),
           ],
         ),
         child: SafeArea(
@@ -334,55 +370,35 @@ class CheckoutScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Obx(() {
-                int finalTotal =
-                    (kost.price * controller.duration.value) + 5000;
+                final int finalTotal = kost.price * controller.duration.value;
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Total Tagihan',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                    Text(
-                      'Rp$finalTotal',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: AppColors.primary,
-                      ),
-                    ),
+                    const Text('Total Tagihan',
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                    Text('Rp$finalTotal',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.primary)),
                   ],
                 );
               }),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                onPressed: () {
-                  int finalTotal =
-                      (kost.price * controller.duration.value) + 5000;
-                  Get.to(() => PaymentMethodScreen(totalAmount: finalTotal));
-                },
-                child: const Text(
-                  'Pilih Pembayaran',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              Obx(() => ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: controller.isLoading.value ? Colors.grey : AppColors.primary,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    onPressed: controller.isLoading.value ? null : _submitRentalRequest,
+                    child: controller.isLoading.value
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Text('Ajukan Sewa',
+                            style: TextStyle(
+                                color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                  )),
             ],
           ),
         ),
@@ -394,22 +410,16 @@ class CheckoutScreen extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: isTotal ? AppColors.textPrimary : AppColors.textSecondary,
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            fontSize: isTotal ? 16 : 14,
-          ),
-        ),
-        Text(
-          amount,
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
-            fontSize: isTotal ? 16 : 14,
-          ),
-        ),
+        Text(title,
+            style: TextStyle(
+                color: isTotal ? AppColors.textPrimary : AppColors.textSecondary,
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+                fontSize: isTotal ? 16 : 14)),
+        Text(amount,
+            style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
+                fontSize: isTotal ? 16 : 14)),
       ],
     );
   }
