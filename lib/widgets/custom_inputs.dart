@@ -5,6 +5,8 @@ class CustomTextField extends StatelessWidget {
   final String hint;
   final IconData icon;
   final bool isPassword;
+  final bool showVisibilityToggle;
+  final VoidCallback? onToggleVisibility;
   final TextInputType keyboardType;
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
@@ -14,6 +16,8 @@ class CustomTextField extends StatelessWidget {
     required this.hint,
     required this.icon,
     this.isPassword = false,
+    this.showVisibilityToggle = false,
+    this.onToggleVisibility,
     this.keyboardType = TextInputType.text,
     this.controller,
     this.onChanged,
@@ -41,6 +45,15 @@ class CustomTextField extends StatelessWidget {
             fontSize: 14,
           ),
           prefixIcon: Icon(icon, color: AppColors.textSecondary),
+          suffixIcon: showVisibilityToggle
+              ? IconButton(
+                  icon: Icon(
+                    isPassword ? Icons.visibility_off : Icons.visibility,
+                    color: AppColors.textSecondary,
+                  ),
+                  onPressed: onToggleVisibility,
+                )
+              : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,

@@ -60,6 +60,7 @@ class ProfileChangePasswordScreen extends StatelessWidget {
                 hint: 'Password Lama',
                 isObscure: !controller.showOldPassword.value,
                 onToggleVisibility: () => controller.toggleOldPassword(),
+                textController: controller.oldPasswordController,
               ),
             ),
             Obx(
@@ -67,6 +68,7 @@ class ProfileChangePasswordScreen extends StatelessWidget {
                 hint: 'Password Baru',
                 isObscure: !controller.showNewPassword.value,
                 onToggleVisibility: () => controller.toggleNewPassword(),
+                textController: controller.newPasswordController,
               ),
             ),
             Obx(
@@ -74,23 +76,19 @@ class ProfileChangePasswordScreen extends StatelessWidget {
                 hint: 'Konfirmasi Password Baru',
                 isObscure: !controller.showConfirmPassword.value,
                 onToggleVisibility: () => controller.toggleConfirmPassword(),
+                textController: controller.confirmPasswordController,
               ),
             ),
 
             const SizedBox(height: 24),
-            PrimaryButton(
-              text: 'Simpan Perubahan',
-              onPressed: () {
-                Get.back(); // Kembali ke halaman profil
-                Get.snackbar(
-                  'Sukses',
-                  'Password Anda berhasil diperbarui',
-                  backgroundColor: Colors.green,
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.BOTTOM,
-                  margin: const EdgeInsets.all(16),
-                );
-              },
+            Obx(
+              () => PrimaryButton(
+                text: 'Simpan Perubahan',
+                isLoading: controller.isLoading.value,
+                onPressed: () {
+                  controller.changePassword();
+                },
+              ),
             ),
           ],
         ),
@@ -102,11 +100,15 @@ class ProfileChangePasswordScreen extends StatelessWidget {
     required String hint,
     required bool isObscure,
     required VoidCallback onToggleVisibility,
+    TextEditingController? textController,
   }) {
     return CustomTextField(
       hint: hint,
       icon: Icons.lock_outline,
       isPassword: isObscure,
+      showVisibilityToggle: true,
+      onToggleVisibility: onToggleVisibility,
+      controller: textController,
       onChanged: (_) {}, // Ini bisa dihubungkan ke Controller nanti
     );
   }

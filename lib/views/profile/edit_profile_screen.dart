@@ -1,10 +1,11 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
+
+import '../../controllers/profile_controller.dart';
 import '../../theme/app_colors.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -13,58 +14,55 @@ class EditProfileScreen extends StatefulWidget {
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
+
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final _nameController  = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  bool _isLoading = false;
-  File? _pickedImage;
+  final ProfileController controller = Get.put(ProfileController());
 
   @override
   void initState() {
     super.initState();
-    _loadUser();
+    controller.loadUser();
   }
 
-  Future<void> _loadUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _nameController.text  = prefs.getString('name') ?? '';
-      _emailController.text = prefs.getString('email') ?? '';
-      _phoneController.text = prefs.getString('phone') ?? '';
-    });
+  @override
+  void dispose() {
+    Get.delete<ProfileController>();
+    super.dispose();
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _pickedImage = File(image.path);
-      });
-    }
+    await controller.pickImage();
+    setState(() {});
   }
 
-  Future<void> _saveProfile() async {
-    final name  = _nameController.text.trim();
-    final phone = _phoneController.text.trim();
+  Future<void> _confirmAndSave() async {
+    final name = controller.nameController.text.trim();
+    final phone = controller.phoneController.text.trim();
 
     if (name.isEmpty) {
-      Get.snackbar('Gagal', 'Nama tidak boleh kosong',
-        backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        'Gagal',
+        'Nama tidak boleh kosong',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
 
     if (phone.isNotEmpty) {
       final phoneRegex = RegExp(r'^08[0-9]{9,11}$');
       if (!phoneRegex.hasMatch(phone)) {
-        Get.snackbar('Gagal', 'Nomor HP tidak valid (contoh: 081234567890)',
-          backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Gagal',
+          'Nomor HP tidak valid (contoh: 081234567890)',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
         return;
       }
     }
 
-    Get.dialog(
+    final confirmed = await Get.dialog<bool>(
       Dialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -79,11 +77,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   color: AppColors.primary.withAlpha((0.1 * 255).round()),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.edit, color: AppColors.primary, size: 32),
+                child: const Icon(
+                  Icons.edit,
+                  color: AppColors.primary,
+                  size: 32,
+                ),
               ),
               const SizedBox(height: 20),
-              const Text('Simpan Perubahan',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'Simpan Perubahan',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               const Text(
                 'Apakah Anda yakin ingin menyimpan perubahan profil?',
@@ -95,29 +99,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        side: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      onPressed: () => Get.back(),
-                      child: const Text('Batal',
-                        style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+                      onPressed: () => Get.back(result: false),
+                      child: const Text('Batal'),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
-                      ),
-                      onPressed: () async {
-                        Get.back();
-                        await _updateProfile(name, phone);
-                      },
-                      child: const Text('Simpan',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      onPressed: () => Get.back(result: true),
+                      child: const Text('Simpan'),
                     ),
                   ),
                 ],
@@ -127,51 +117,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
     );
-  }
 
-  Future<void> _updateProfile(String name, String phone) async {
-    setState(() => _isLoading = true);
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token') ?? '';
-
-      final response = await http.put(
-        Uri.parse('https://chess-gore-patience.ngrok-free.dev/api/profile'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({'name': name, 'phone': phone}),
-      );
-
-      setState(() => _isLoading = false);
-
-      if (response.statusCode == 200) {
-        await prefs.setString('name', name);
-        await prefs.setString('phone', phone);
+    if (confirmed == true) {
+      final res = await controller.updateProfile(name: name, phone: phone);
+      if (res.success) {
+        Get.snackbar(
+          'Sukses',
+          res.message,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
         Get.back();
-        Get.snackbar('Sukses', 'Profil berhasil diperbarui',
-          backgroundColor: Colors.green, colorText: Colors.white);
       } else {
-        final data = jsonDecode(response.body);
-        Get.snackbar('Gagal', data['message'] ?? 'Gagal memperbarui profil',
-          backgroundColor: Colors.red, colorText: Colors.white);
+        Get.snackbar(
+          'Gagal',
+          res.message,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      Get.snackbar('Gagal', 'Terjadi kesalahan jaringan',
-        backgroundColor: Colors.red, colorText: Colors.white);
+      setState(() {});
     }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    super.dispose();
   }
 
   @override
@@ -185,8 +151,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Get.back(),
         ),
-        title: const Text('Ubah Profil',
-          style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Ubah Profil',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -194,19 +166,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Column(
           children: [
             Center(
-                child: GestureDetector(
-                  onTap: _pickImage,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CircleAvatar(
+              child: GestureDetector(
+                onTap: _pickImage,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Obx(() {
+                      final img = controller.pickedImage.value;
+                      ImageProvider? provider;
+                      if (img != null) {
+                        if (img is Uint8List)
+                          provider = MemoryImage(img);
+                        else if (img is File)
+                          provider = FileImage(img);
+                      } else if (controller.avatarUrl.value.isNotEmpty) {
+                        provider = NetworkImage(controller.avatarUrl.value);
+                      }
+                      return CircleAvatar(
                         radius: 60,
                         backgroundColor: AppColors.primary,
-                        backgroundImage: _pickedImage != null ? FileImage(_pickedImage!) : null,
-                        child: _pickedImage == null
+                        backgroundImage: provider,
+                        child: provider == null
                             ? Text(
-                                _nameController.text.isNotEmpty
-                                    ? _nameController.text[0].toUpperCase()
+                                controller.nameController.text.isNotEmpty
+                                    ? controller.nameController.text[0]
+                                          .toUpperCase()
                                     : '?',
                                 style: const TextStyle(
                                   fontSize: 40,
@@ -215,47 +199,74 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 ),
                               )
                             : null,
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 4,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                          ),
-                          padding: const EdgeInsets.all(4),
-                          child: const Icon(Icons.edit, color: AppColors.primary, size: 24),
+                      );
+                    }),
+                    Positioned(
+                      bottom: 0,
+                      right: 4,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                        padding: const EdgeInsets.all(4),
+                        child: const Icon(
+                          Icons.edit,
+                          color: AppColors.primary,
+                          size: 24,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
             ),
             const SizedBox(height: 32),
-
-            _buildInputField('Nama Lengkap', Icons.person_outline, _nameController),
+            _buildInputField(
+              'Nama Lengkap',
+              Icons.person_outline,
+              controller.nameController,
+            ),
             const SizedBox(height: 16),
-            _buildInputFieldReadOnly('Email', Icons.email_outlined, _emailController),
+            _buildInputFieldReadOnly(
+              'Email',
+              Icons.email_outlined,
+              controller.emailController,
+            ),
             const SizedBox(height: 16),
-            _buildInputField('Nomor Telepon', Icons.phone_outlined, _phoneController,
-              keyboardType: TextInputType.phone),
-
+            _buildInputField(
+              'Nomor Telepon',
+              Icons.phone_outlined,
+              controller.phoneController,
+              keyboardType: TextInputType.phone,
+            ),
             const SizedBox(height: 40),
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
+            Obx(
+              () => SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : _confirmAndSave,
+                  child: controller.isLoading.value
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Simpan Perubahan',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
-                onPressed: _isLoading ? null : _saveProfile,
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Simpan Perubahan',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -264,12 +275,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildInputField(String label, IconData icon, TextEditingController controller,
-      {TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildInputField(
+    String label,
+    IconData icon,
+    TextEditingController controller, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
@@ -283,7 +301,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             decoration: InputDecoration(
               prefixIcon: Icon(icon, color: Colors.grey.shade600),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
             ),
           ),
         ),
@@ -291,13 +312,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildInputFieldReadOnly(String label, IconData icon, TextEditingController controller) {
+  Widget _buildInputFieldReadOnly(
+    String label,
+    IconData icon,
+    TextEditingController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -305,8 +333,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 color: Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text('Tidak dapat diubah',
-                style: TextStyle(fontSize: 10, color: Colors.grey)),
+              child: const Text(
+                'Tidak dapat diubah',
+                style: TextStyle(fontSize: 10, color: Colors.grey),
+              ),
             ),
           ],
         ),
@@ -323,7 +353,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             decoration: InputDecoration(
               prefixIcon: Icon(icon, color: Colors.grey.shade400),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
             ),
             style: TextStyle(color: Colors.grey.shade500),
           ),
