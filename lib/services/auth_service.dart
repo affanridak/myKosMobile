@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,14 +16,50 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  // final String _baseUrl = 'https://chess-gore-patience.ngrok-free.dev/api';
-  // For Android emulator use 10.0.2.2 to reach host machine
-  final String _baseUrl = 'http://10.0.2.2:8000/api';
+  final String _baseUrl = 'http://127.0.0.1:8000/api';
   final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'ngrok-skip-browser-warning': 'true',
   };
+
+  String get _origin {
+    final baseUri = Uri.parse(_baseUrl);
+    return '${baseUri.scheme}://${baseUri.authority}';
+  }
+
+  bool _isLocalAvatarHost(String host) {
+    final normalized = host.toLowerCase();
+    return normalized == '127.0.0.1' ||
+        normalized == 'localhost' ||
+        normalized == '10.0.2.2';
+  }
+
+  String _normalizeAvatarUrl(String? avatar) {
+    final value = (avatar ?? '').trim();
+    if (value.isEmpty) {
+      return '';
+    }
+
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      final parsed = Uri.tryParse(value);
+      if (parsed != null && _isLocalAvatarHost(parsed.host)) {
+        final query = parsed.query.isNotEmpty ? '?${parsed.query}' : '';
+        return '$_origin${parsed.path}$query';
+      }
+      return value;
+    }
+
+    if (value.startsWith('/storage/')) {
+      return '$_origin$value';
+    }
+    if (value.startsWith('storage/')) {
+      return '$_origin/$value';
+    }
+
+    final cleanPath = value.replaceFirst(RegExp(r'^/+'), '');
+    return '$_origin/storage/$cleanPath';
+  }
 
   String? _token;
   String? get token => _token;
@@ -32,6 +70,7 @@ class AuthService {
     String email,
     String role, {
     String? phone,
+    String? avatar,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
@@ -39,19 +78,228 @@ class AuthService {
     await prefs.setString('email', email);
     await prefs.setString('role', role);
     await prefs.setString('phone', phone ?? '');
+    final emailKey = email.toLowerCase();
+    final avatarKey = 'avatar:$emailKey';
+    await prefs.setString(avatarKey, _normalizeAvatarUrl(avatar));
+    // convenience: global avatar reflects current user
+    await prefs.setString('avatar', _normalizeAvatarUrl(avatar));
     await prefs.setInt('login_at', DateTime.now().millisecondsSinceEpoch);
     _token = token;
   }
 
   Future<Map<String, String?>> getUser() async {
     final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('email') ?? '';
+    final emailKey = email.toLowerCase();
+    final avatarKey = email.isNotEmpty ? 'avatar:$emailKey' : 'avatar';
+    final storedAvatar =
+        prefs.getString(avatarKey) ?? prefs.getString('avatar');
     return {
       'token': prefs.getString('token'),
       'name': prefs.getString('name'),
       'email': prefs.getString('email'),
       'role': prefs.getString('role'),
       'phone': prefs.getString('phone'),
+      'avatar': _normalizeAvatarUrl(storedAvatar),
     };
+  }
+
+  Future<AuthResult> updateProfile({
+    required String name,
+    String? phone,
+    dynamic avatar,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    if (token == null) {
+      return AuthResult(success: false, message: 'Tidak terautentikasi');
+    }
+
+    final uri = Uri.parse('$_baseUrl/profile');
+    String lastBody = '';
+    try {
+      final fieldNames = ['avatar', 'photo', 'file'];
+      for (final field in fieldNames) {
+        // Try POST with _method=PUT first
+        for (final usePostOverride in [true, false]) {
+          final method = usePostOverride ? 'POST' : 'PUT';
+          final request = http.MultipartRequest(method, uri);
+          if (usePostOverride) {
+            request.fields['_method'] = 'PUT';
+          }
+          request.fields['name'] = name;
+          if (phone != null) {
+            request.fields['phone'] = phone;
+          }
+          if (avatar != null) {
+            try {
+              http.MultipartFile file;
+              if (avatar is File) {
+                file = await http.MultipartFile.fromPath(field, avatar.path);
+              } else if (avatar is Uint8List) {
+                file = http.MultipartFile.fromBytes(
+                  field,
+                  avatar,
+                  filename: 'avatar.jpg',
+                );
+              } else {
+                // unsupported avatar type, skip trying to attach
+                continue;
+              }
+              request.files.add(file);
+            } catch (e) {
+              // couldn't create multipart file with this field name, try next
+              continue;
+            }
+          }
+          request.headers.addAll({
+            'Accept': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+            'Authorization': 'Bearer $token',
+          });
+
+          final streamed = await request.send();
+          final response = await http.Response.fromStream(streamed);
+          lastBody = response.body;
+
+          // Try to decode JSON body if possible to extract server messages
+          dynamic data;
+          try {
+            data = jsonDecode(response.body);
+          } catch (_) {
+            data = null;
+          }
+
+          // debug: update profile attempt logged during development
+
+          if (response.statusCode == 200) {
+            final user = (data is Map) ? (data['user'] ?? data) : data ?? {};
+            final savedName = (user is Map && user['name'] != null)
+                ? user['name']
+                : name;
+            final savedPhone = (user is Map && user['phone'] != null)
+                ? user['phone']
+                : (phone ?? '');
+            String savedAvatar = '';
+            if (user is Map && user['avatar'] != null) {
+              savedAvatar = user['avatar'];
+            }
+            if (user is Map && user['photo'] != null) {
+              savedAvatar = user['photo'];
+            }
+            if (user is Map && user['profile_photo_url'] != null) {
+              savedAvatar = user['profile_photo_url'];
+            }
+
+            await prefs.setString('name', savedName);
+            await prefs.setString('phone', savedPhone);
+
+            // Only overwrite stored avatar if server returned one.
+            if (savedAvatar.isNotEmpty) {
+              final email = prefs.getString('email') ?? '';
+              final key = email.isNotEmpty
+                  ? 'avatar:${email.toLowerCase()}'
+                  : 'avatar';
+              await prefs.setString(key, _normalizeAvatarUrl(savedAvatar));
+              await prefs.setString('avatar', _normalizeAvatarUrl(savedAvatar));
+            } else {
+              // Try to refresh user data from API (some backends don't return
+              // avatar in the update response). This will update prefs if
+              // the avatar exists.
+              try {
+                final resp = await http.get(
+                  Uri.parse('$_baseUrl/user'),
+                  headers: {
+                    'Accept': 'application/json',
+                    'ngrok-skip-browser-warning': 'true',
+                    'Authorization': 'Bearer $token',
+                  },
+                );
+                if (resp.statusCode == 200) {
+                  final fresh = jsonDecode(resp.body);
+                  String freshAvatar = '';
+                  if (fresh is Map && fresh['avatar'] != null) {
+                    freshAvatar = fresh['avatar'];
+                  }
+                  if (fresh is Map && fresh['photo'] != null) {
+                    freshAvatar = fresh['photo'];
+                  }
+                  if (fresh is Map && fresh['profile_photo_url'] != null) {
+                    freshAvatar = fresh['profile_photo_url'];
+                  }
+                  if (freshAvatar.isNotEmpty) {
+                    final email = prefs.getString('email') ?? '';
+                    final key = email.isNotEmpty
+                        ? 'avatar:${email.toLowerCase()}'
+                        : 'avatar';
+                    await prefs.setString(
+                      key,
+                      _normalizeAvatarUrl(freshAvatar),
+                    );
+                    await prefs.setString(
+                      'avatar',
+                      _normalizeAvatarUrl(freshAvatar),
+                    );
+                  }
+                }
+              } catch (e) {
+                // ignore errors from refresh
+              }
+            }
+
+            return AuthResult(
+              success: true,
+              message: (data is Map && data['message'] != null)
+                  ? data['message']
+                  : 'Profil berhasil diperbarui',
+            );
+          } else {
+            // non-200 response: try to extract meaningful message
+            String serverMessage = '';
+            if (data is Map) {
+              if (data['message'] != null) {
+                serverMessage = data['message'].toString();
+              } else if (data['errors'] != null) {
+                final errs = data['errors'];
+                if (errs is Map && errs.values.isNotEmpty) {
+                  final first = errs.values.first;
+                  if (first is List && first.isNotEmpty) {
+                    serverMessage = first.first.toString();
+                  } else {
+                    serverMessage = first.toString();
+                  }
+                } else {
+                  serverMessage = errs.toString();
+                }
+              } else {
+                serverMessage = data.toString();
+              }
+            } else {
+              serverMessage = response.body;
+            }
+
+            // debug: updateProfile failed during development
+
+            // Save a concise lastBody to report after all attempts
+            final shortMessage = serverMessage.length > 300
+                ? '${serverMessage.substring(0, 300)}...'
+                : serverMessage;
+            lastBody = 'HTTP ${response.statusCode}: $shortMessage';
+            // continue trying other field/method combos
+          }
+        }
+      }
+      return AuthResult(
+        success: false,
+        message: 'Gagal memperbarui profil: $lastBody',
+      );
+    } catch (e) {
+      // debug: exception during updateProfile
+      return AuthResult(
+        success: false,
+        message: 'Terjadi kesalahan jaringan: $e',
+      );
+    }
   }
 
   Future<bool> isSessionValid() async {
@@ -59,7 +307,9 @@ class AuthService {
     final token = prefs.getString('token');
     final loginAt = prefs.getInt('login_at');
 
-    if (token == null || loginAt == null) return false;
+    if (token == null || loginAt == null) {
+      return false;
+    }
 
     final loginTime = DateTime.fromMillisecondsSinceEpoch(loginAt);
     final diff = DateTime.now().difference(loginTime).inDays;
@@ -75,7 +325,9 @@ class AuthService {
 
   Future<void> clearUser() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    // Keep cached profile fields so the avatar and basic info survive logout.
+    await prefs.remove('token');
+    await prefs.remove('login_at');
     _token = null;
   }
 
@@ -220,6 +472,44 @@ class AuthService {
     }
   }
 
+  /// Change password for authenticated user (requires current password)
+  Future<AuthResult> changePasswordAuthenticated(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) {
+        return AuthResult(success: false, message: 'Tidak terautentikasi');
+      }
+
+      final response = await http.post(
+        Uri.parse('$_baseUrl/profile/change-password'),
+        headers: {..._headers, 'Authorization': 'Bearer $token'},
+        body: jsonEncode({
+          'current_password': currentPassword,
+          'password': newPassword,
+          'password_confirmation': newPassword,
+        }),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return AuthResult(
+          success: true,
+          message: data['message'] ?? 'Password berhasil diubah',
+        );
+      } else {
+        return AuthResult(
+          success: false,
+          message: data['message'] ?? 'Gagal ubah password',
+        );
+      }
+    } catch (e) {
+      return AuthResult(success: false, message: 'Terjadi kesalahan jaringan');
+    }
+  }
+
   Future<void> fetchAndSaveUserFromApi() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -237,7 +527,18 @@ class AuthService {
         await prefs.setString('email', data['email'] ?? '');
         await prefs.setString('role', data['role'] ?? 'tenant');
         await prefs.setString('phone', data['phone'] ?? '');
-        await prefs.setString('avatar', data['avatar'] ?? '');
+        final email = data['email'] ?? prefs.getString('email') ?? '';
+        final key = email.isNotEmpty
+            ? 'avatar:${(email as String).toLowerCase()}'
+            : 'avatar';
+        await prefs.setString(
+          key,
+          _normalizeAvatarUrl(data['avatar']?.toString()),
+        );
+        await prefs.setString(
+          'avatar',
+          _normalizeAvatarUrl(data['avatar']?.toString()),
+        );
       }
     } catch (e) {
       //
