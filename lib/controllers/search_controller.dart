@@ -63,9 +63,11 @@ class SearchKostController extends GetxController {
   }
 
   void applyFilters() {
+    final theme = Theme.of(Get.context!);
+
     Get.dialog(
       Dialog(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 8,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
@@ -105,7 +107,7 @@ class SearchKostController extends GetxController {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 8),
@@ -113,7 +115,7 @@ class SearchKostController extends GetxController {
                 'Mencari kost yang sesuai',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: theme.textTheme.bodySmall?.color,
                 ),
               ),
             ],
@@ -123,20 +125,29 @@ class SearchKostController extends GetxController {
       barrierDismissible: false,
     );
 
-    _fetchFiltered().then((results) {
-      Get.back();
-      Get.to(() => SearchResultScreen(
-            location: locationController.text.trim(),
-            type: selectedType.value,
-            minPrice: priceRange.value.start.toInt(),
-            maxPrice: priceRange.value.end.toInt(),
-            facilities: selectedFacilities.toList(),
-            results: results,
-          ));
-    }).catchError((_) {
-      Get.back();
-      Get.snackbar('Error', 'Gagal memuat data kost',
-          backgroundColor: Colors.red, colorText: Colors.white);
-    });
+    _fetchFiltered()
+        .then((results) {
+          Get.back();
+          Get.to(
+            () => SearchResultScreen(
+              location: locationController.text.trim(),
+              type: selectedType.value,
+              minPrice: priceRange.value.start.toInt(),
+              maxPrice: priceRange.value.end.toInt(),
+              facilities: selectedFacilities.toList(),
+              results: results,
+            ),
+          );
+        })
+        .catchError((_) {
+          Get.back();
+          final theme = Theme.of(Get.context!);
+          Get.snackbar(
+            'Error',
+            'Gagal memuat data kost',
+            backgroundColor: theme.colorScheme.error,
+            colorText: theme.colorScheme.onError,
+          );
+        });
   }
 }

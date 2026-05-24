@@ -55,12 +55,17 @@ class AuthController extends GetxController {
   }
 
   void _showError(String message) {
+    final theme = Theme.of(Get.context!);
     Get.snackbar(
       'Oops! Gagal',
       message,
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      icon: const Icon(Icons.error_outline, color: Colors.white, size: 28),
+      backgroundColor: theme.colorScheme.error,
+      colorText: theme.colorScheme.onError,
+      icon: Icon(
+        Icons.error_outline,
+        color: theme.colorScheme.onError,
+        size: 28,
+      ),
       margin: const EdgeInsets.all(16),
       borderRadius: 16,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -70,14 +75,15 @@ class AuthController extends GetxController {
   }
 
   void _showSuccess(String title, String message) {
+    final theme = Theme.of(Get.context!);
     Get.snackbar(
       title,
       message,
-      backgroundColor: Colors.green.shade600,
-      colorText: Colors.white,
-      icon: const Icon(
+      backgroundColor: theme.colorScheme.secondary,
+      colorText: theme.colorScheme.onSecondary,
+      icon: Icon(
         Icons.check_circle_outline,
-        color: Colors.white,
+        color: theme.colorScheme.onSecondary,
         size: 28,
       ),
       margin: const EdgeInsets.all(16),

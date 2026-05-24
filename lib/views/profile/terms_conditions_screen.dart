@@ -1,28 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../theme/app_colors.dart';
 
 class TermsConditionsScreen extends StatelessWidget {
   const TermsConditionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: Theme.of(context).iconTheme.color,
-          ),
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
         title: Text(
           'Syarat & Ketentuan',
           style: TextStyle(
-            color: Theme.of(context).textTheme.bodyLarge?.color,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -36,11 +34,11 @@ class TermsConditionsScreen extends StatelessWidget {
           text: TextSpan(
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: theme.textTheme.bodyMedium?.color,
               height: 1.6,
-              fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
+              fontFamily: theme.textTheme.bodyMedium?.fontFamily,
             ),
-            children: const [
+            children: [
               TextSpan(
                 text: 'Terakhir diperbarui: 28 April 2026\n\n',
                 style: TextStyle(fontStyle: FontStyle.italic),
@@ -53,7 +51,7 @@ class TermsConditionsScreen extends StatelessWidget {
                 text: '1. Penggunaan Layanan\n',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: theme.textTheme.titleMedium?.color,
                   fontSize: 16,
                 ),
               ),
@@ -65,7 +63,7 @@ class TermsConditionsScreen extends StatelessWidget {
                 text: '2. Akun Pengguna\n',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: theme.textTheme.titleMedium?.color,
                   fontSize: 16,
                 ),
               ),
@@ -77,7 +75,7 @@ class TermsConditionsScreen extends StatelessWidget {
                 text: '3. Pembayaran dan Transaksi\n',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: theme.textTheme.titleMedium?.color,
                   fontSize: 16,
                 ),
               ),
@@ -89,7 +87,7 @@ class TermsConditionsScreen extends StatelessWidget {
                 text: '4. Perubahan Syarat\n',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: theme.textTheme.titleMedium?.color,
                   fontSize: 16,
                 ),
               ),

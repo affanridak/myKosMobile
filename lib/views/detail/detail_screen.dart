@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../theme/app_colors.dart';
 import '../../models/kost_model.dart';
 import '../../services/kost_service.dart';
 import '../payment/checkout_screen.dart';
@@ -16,10 +14,10 @@ class DetailScreen extends StatefulWidget {
 }
 
 class _DetailScreenState extends State<DetailScreen> {
-  int _currentImageIndex = 0;
+  final KostService _kostService = KostService();
+  Map<String, dynamic>? _detail;
   bool _isLoading = true;
   bool _isAddingWishlist = false;
-  Map<String, dynamic>? _detail;
 
   @override
   void initState() {
@@ -28,258 +26,196 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _fetchDetail() async {
-    final data = await KostService().getPropertyDetail(widget.kost.id);
+    final data = await _kostService.getPropertyDetail(widget.kost.id);
     setState(() {
       _detail = data;
       _isLoading = false;
     });
   }
 
-  List<String> get _gallery {
-    if (_detail == null) return [widget.kost.imageUrl];
-    final images = List<String>.from(_detail!['images'] ?? []);
-    return images.isEmpty ? [widget.kost.imageUrl] : images;
-  }
-
-  Future<void> _openMaps() async {
-    final lat = _detail?['latitude'];
-    final lng = _detail?['longitude'];
-    final name = Uri.encodeComponent(widget.kost.name);
-    Uri uri;
-    if (lat != null && lng != null) {
-      uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
-    } else {
-      uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$name');
-    }
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-
   Future<void> _addToWishlist() async {
     setState(() => _isAddingWishlist = true);
-    try {
-      await KostService().toggleWishlist(widget.kost.id);
+    final added = await _kostService.toggleWishlist(widget.kost.id);
+    if (!mounted) return;
+    final theme = Theme.of(context);
+    if (added) {
       Get.snackbar(
         'Berhasil',
-        'Kost ditambahkan ke Keranjang Saya',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
+        'Kost ditambahkan ke wishlist',
+        backgroundColor: theme.colorScheme.secondary,
+        colorText: theme.colorScheme.onSecondary,
       );
-    } catch (e) {
+    } else {
       Get.snackbar(
         'Gagal',
-        'Gagal menambahkan ke daftar keinginan',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
+        'Gagal menambahkan wishlist',
+        backgroundColor: theme.colorScheme.error,
+        colorText: theme.colorScheme.onError,
       );
-    } finally {
-      setState(() => _isAddingWishlist = false);
     }
+    setState(() => _isAddingWishlist = false);
+  }
+
+  List<String> get _gallery {
+    final imgs = _detail?['images'];
+    if (imgs is List && imgs.isNotEmpty) return imgs.cast<String>();
+    return [widget.kost.imageUrl];
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final kost = widget.kost;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: BackButton(color: theme.iconTheme.color),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  expandedHeight: 300,
-                  pinned: true,
-                  backgroundColor: Colors.white,
-                  leading: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: CircleAvatar(
-                      backgroundColor: Colors.white.withAlpha((0.9 * 255).round()),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.black),
-                        onPressed: () => Get.back(),
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: 280,
+                    child: PageView.builder(
+                      itemCount: _gallery.length,
+                      itemBuilder: (context, i) => Image.network(
+                        _gallery[i],
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (context, error, _) => Container(
+                          color: theme.dividerColor.withAlpha(
+                            (0.12 * 255).round(),
+                          ),
+                          child: const Center(child: Icon(Icons.broken_image)),
+                        ),
                       ),
                     ),
                   ),
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        PageView.builder(
-                          onPageChanged: (index) => setState(() => _currentImageIndex = index),
-                          itemCount: _gallery.length,
-                          itemBuilder: (context, index) {
-                            final imagePath = _gallery[index];
-                            return imagePath.startsWith('http')
-                                ? Image.network(imagePath, fit: BoxFit.cover)
-                                : Image.asset(imagePath, fit: BoxFit.cover);
-                          },
-                        ),
-                        Positioned(
-                          bottom: 16,
-                          left: 0,
-                          right: 0,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              _gallery.length,
-                              (index) => AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
-                                height: 8,
-                                width: _currentImageIndex == index ? 24 : 8,
-                                decoration: BoxDecoration(
-                                  color: _currentImageIndex == index ? Colors.white : Colors.white54,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                    ),
-                    padding: const EdgeInsets.all(20.0),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           kost.name,
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, height: 1.3),
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.warning.withAlpha((0.15 * 255).round()),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.star, color: AppColors.warning, size: 14),
-                                  const SizedBox(width: 4),
-                                  Text('${kost.rating}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.warning)),
-                                ],
+                            Text(
+                              'Rp${kost.price}/bulan',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.deepPurple,
+                                fontSize: 18,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Text('(${_detail?['review_count'] ?? 0} ulasan)',
-                                style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
                             const SizedBox(width: 12),
-                            Container(width: 4, height: 4,
-                                decoration: BoxDecoration(color: Colors.grey.shade400, shape: BoxShape.circle)),
-                            const SizedBox(width: 12),
-                            const Icon(Icons.location_on, color: AppColors.primary, size: 16),
-                            const SizedBox(width: 4),
+                            Icon(Icons.location_on, color: Colors.deepPurple),
+                            const SizedBox(width: 6),
                             Expanded(
-                              child: Text(kost.location,
-                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                              child: Text(
+                                kost.location,
+                                style: TextStyle(
+                                  color: theme.textTheme.bodySmall?.color,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _detail?['description'] ?? kost.description ?? '-',
+                          style: TextStyle(
+                            color: theme.textTheme.bodySmall?.color,
+                            height: 1.5,
+                          ),
                         ),
                         const SizedBox(height: 20),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text('Rp${kost.price}',
-                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 2),
-                              child: Text(' /bulan', style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        const Text('Deskripsi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Text(_detail?['description'] ?? kost.description ?? '-',
-                            style: const TextStyle(color: AppColors.textSecondary, height: 1.5)),
-                        Divider(color: Colors.grey.shade100, thickness: 8, height: 48),
-                        _buildFasilitas(),
-                        Divider(color: Colors.grey.shade100, thickness: 8, height: 48),
-                        _buildPeraturan(),
-                        Divider(color: Colors.grey.shade100, thickness: 8, height: 48),
-                        _buildLokasi(),
-                        Divider(color: Colors.grey.shade100, thickness: 8, height: 48),
-                        _buildOwnerInfo(),
-                        Divider(color: Colors.grey.shade100, thickness: 8, height: 48),
-                        _buildUlasan(),
-                        const SizedBox(height: 24),
+                        _buildOwnerInfo(theme),
                       ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -2))],
-        ),
+        padding: const EdgeInsets.all(12),
+        color: theme.cardColor,
         child: SafeArea(
           child: Row(
             children: [
               SizedBox(
-                height: 54,
-                width: 60,
+                width: 56,
+                height: 48,
                 child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    padding: EdgeInsets.zero,
-                  ),
                   onPressed: () => Get.to(() => const ChatDetailScreen()),
-                  child: const Icon(Icons.chat_bubble_outline, color: AppColors.primary),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: theme.dividerColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.chat_bubble_outline,
+                    color: theme.iconTheme.color,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               SizedBox(
-                height: 54,
-                width: 60,
+                width: 56,
+                height: 48,
                 child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.primary),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    padding: EdgeInsets.zero,
-                  ),
                   onPressed: _isAddingWishlist ? null : _addToWishlist,
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: theme.dividerColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   child: _isAddingWishlist
                       ? const SizedBox(
-                          width: 20, height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.bookmark_border, color: AppColors.primary),
+                      : Icon(
+                          Icons.bookmark_border,
+                          color: theme.iconTheme.color,
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: SizedBox(
-                  height: 54,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: ElevatedButton(
+                  onPressed: () =>
+                      Get.to(() => CheckoutScreen(kost: widget.kost)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    onPressed: () => Get.to(() => CheckoutScreen(kost: widget.kost)),
-                    child: const Text('Sewa Sekarang',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                  child: Text(
+                    'Sewa Sekarang',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -290,253 +226,48 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Text(title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-    );
-  }
-
-  Widget _buildListItem(IconData icon, String title, {Color iconColor = AppColors.primary}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: iconColor),
-          const SizedBox(width: 12),
-          Expanded(child: Text(title, style: const TextStyle(color: AppColors.textSecondary, height: 1.4))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFasilitas() {
-    final roomFacilities = _detail?['room_types'] != null && (_detail!['room_types'] as List).isNotEmpty
-        ? List<String>.from((_detail!['room_types'][0]['room_facilities'] ?? []))
-        : <String>[];
-    final propertyFacilities = List<String>.from(_detail?['property_facilities'] ?? []);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('Fasilitas'),
-        if (roomFacilities.isNotEmpty) ...[
-          const Text('Fasilitas Kamar',
-              style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-          const SizedBox(height: 8),
-          ...roomFacilities.map((f) => _buildListItem(_facilityIcon(f), f)),
-          const SizedBox(height: 16),
-        ],
-        if (propertyFacilities.isNotEmpty) ...[
-          const Text('Fasilitas Umum',
-              style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-          const SizedBox(height: 8),
-          ...propertyFacilities.map((f) => _buildListItem(_facilityIcon(f), f)),
-        ],
-      ],
-    );
-  }
-
-  IconData _facilityIcon(String name) {
-    final n = name.toLowerCase();
-    if (n.contains('wifi') || n.contains('wi-fi')) return Icons.wifi;
-    if (n.contains('ac')) return Icons.ac_unit;
-    if (n.contains('kasur')) return Icons.bed_outlined;
-    if (n.contains('lemari')) return Icons.door_sliding_outlined;
-    if (n.contains('meja')) return Icons.desk;
-    if (n.contains('parkir')) return Icons.local_parking_outlined;
-    if (n.contains('dapur')) return Icons.kitchen_outlined;
-    if (n.contains('kamar mandi')) return Icons.bathtub_outlined;
-    if (n.contains('cctv')) return Icons.videocam_outlined;
-    if (n.contains('jemuran')) return Icons.dry_outlined;
-    if (n.contains('kipas')) return Icons.air;
-    if (n.contains('kursi')) return Icons.chair_outlined;
-    if (n.contains('penjaga')) return Icons.security;
-    if (n.contains('ruang tamu')) return Icons.living_outlined;
-    return Icons.check_circle_outline;
-  }
-
-  Widget _buildPeraturan() {
-    final rules = _detail?['rules'] ?? '-';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('Peraturan Kost'),
-        ...rules.toString().split('.').where((s) => s.trim().isNotEmpty).map(
-              (rule) => _buildListItem(Icons.do_not_disturb_alt_outlined, rule.trim(), iconColor: Colors.red),
-            ),
-      ],
-    );
-  }
-
-  Widget _buildLokasi() {
-    final address = _detail?['address'] ?? widget.kost.address;
-    final city = _detail?['city'] ?? widget.kost.city;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('Lokasi'),
-        Row(
-          children: [
-            const Icon(Icons.location_on, color: AppColors.primary, size: 18),
-            const SizedBox(width: 8),
-            Expanded(child: Text('$address, $city',
-                style: const TextStyle(color: AppColors.textSecondary, height: 1.5))),
-          ],
-        ),
-        const SizedBox(height: 16),
-        GestureDetector(
-          onTap: _openMaps,
-          child: Container(
-            height: 160,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(16),
-              image: const DecorationImage(
-                image: NetworkImage(
-                    'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.black.withAlpha((0.2 * 255).round()),
-              ),
-              child: const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.location_on, size: 40, color: Colors.red),
-                    SizedBox(height: 8),
-                    Text('Buka di Google Maps',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOwnerInfo() {
+  Widget _buildOwnerInfo(ThemeData theme) {
     final owner = _detail?['owner'];
     final name = owner?['name'] ?? '-';
     final phone = owner?['phone'] ?? '-';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        _buildSectionTitle('Profil Tuan Kost'),
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: AppColors.primary.withAlpha((0.1 * 255).round()),
-              child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primary)),
+        CircleAvatar(
+          radius: 28,
+          backgroundColor: Theme.of(
+            context,
+          ).colorScheme.primary.withAlpha((0.1 * 255).round()),
+          child: Text(
+            name.isNotEmpty ? name[0].toUpperCase() : '?',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 4),
-                  Text(phone.isNotEmpty && phone != '-' ? phone : 'Belum ada nomor HP',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildUlasan() {
-    final reviews = List<Map<String, dynamic>>.from(_detail?['reviews'] ?? []);
-    final reviewCount = _detail?['review_count'] ?? 0;
-    final avgRating = widget.kost.rating;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('Ulasan Penyewa'),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Icon(Icons.star, color: AppColors.warning, size: 40),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text('$avgRating',
-                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, height: 1.0)),
-                    const Text(' / 5.0',
-                        style: TextStyle(fontSize: 16, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text('Berdasarkan $reviewCount ulasan',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        if (reviews.isEmpty)
-          const Text('Belum ada ulasan', style: TextStyle(color: AppColors.textSecondary))
-        else
-          ...reviews.map((review) => _buildReviewItem(
-                review['name'] ?? 'Anonim',
-                review['date'] ?? '',
-                (review['rating'] ?? 0).toInt(),
-                review['comment'] ?? '',
-              )),
-      ],
-    );
-  }
-
-  Widget _buildReviewItem(String name, String date, int rating, String review) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: AppColors.primary.withAlpha((0.1 * 255).round()),
-                child: Text(name[0],
-                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    Text(date, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
-                  ],
+              Text(
+                name,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
-              Row(children: List.generate(5,
-                  (i) => Icon(i < rating ? Icons.star : Icons.star_border, color: AppColors.warning, size: 16))),
+              const SizedBox(height: 4),
+              Text(
+                phone.isNotEmpty && phone != '-' ? phone : 'Belum ada nomor HP',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(review, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.4)),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

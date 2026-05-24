@@ -21,8 +21,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
@@ -34,18 +35,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Get.back(),
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.textPrimary,
-                    ),
+                    icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     'Daftar',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
                 ],
@@ -79,9 +77,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: theme.dividerColor),
                 ),
                 child: TextField(
                   controller: authC.registerPassword,
@@ -90,19 +88,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     hintText: 'Password',
                     hintStyle: TextStyle(
-                      color: AppColors.textSecondary.withAlpha(
+                      color: theme.textTheme.bodySmall?.color?.withAlpha(
                         (0.5 * 255).round(),
                       ),
                       fontSize: 14,
                     ),
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.lock_outline,
-                      color: AppColors.textSecondary,
+                      color: theme.iconTheme.color,
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _showPassword ? Icons.visibility : Icons.visibility_off,
-                        color: AppColors.textSecondary,
+                        color: theme.iconTheme.color,
                       ),
                       onPressed: () =>
                           setState(() => _showPassword = !_showPassword),
@@ -119,9 +117,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: theme.dividerColor),
                 ),
                 child: TextField(
                   controller: authC.registerConfirmPassword,
@@ -130,21 +128,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     hintText: 'Konfirmasi Password',
                     hintStyle: TextStyle(
-                      color: AppColors.textSecondary.withAlpha(
+                      color: theme.textTheme.bodySmall?.color?.withAlpha(
                         (0.5 * 255).round(),
                       ),
                       fontSize: 14,
                     ),
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.lock_reset_outlined,
-                      color: AppColors.textSecondary,
+                      color: theme.iconTheme.color,
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _showConfirmPassword
                             ? Icons.visibility
                             : Icons.visibility_off,
-                        color: AppColors.textSecondary,
+                        color: theme.iconTheme.color,
                       ),
                       onPressed: () => setState(
                         () => _showConfirmPassword = !_showConfirmPassword,
@@ -173,17 +171,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Divider(color: Colors.grey.shade300, thickness: 1),
+                    child: Divider(color: theme.dividerColor, thickness: 1),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                     child: Text(
                       'Atau',
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: theme.textTheme.bodySmall?.color),
                     ),
                   ),
                   Expanded(
-                    child: Divider(color: Colors.grey.shade300, thickness: 1),
+                    child: Divider(color: theme.dividerColor, thickness: 1),
                   ),
                 ],
               ),
@@ -195,7 +193,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ? null
                       : () => authC.loginWithGoogle(),
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
+                    backgroundColor: theme.cardColor,
                     side: const BorderSide(color: AppColors.primary),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -222,7 +220,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   Text(
                     'Sudah punya akun ? ',
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: theme.textTheme.bodySmall?.color),
                   ),
                   GestureDetector(
                     onTap: () => Get.back(),

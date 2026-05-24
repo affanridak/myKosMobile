@@ -24,6 +24,8 @@ class MainLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: Obx(
         () => AnimatedSwitcher(
@@ -43,13 +45,16 @@ class MainLayout extends StatelessWidget {
             currentIndex: controller.currentIndex.value,
             onTap: controller.changePage,
             selectedItemColor: AppColors.primary,
-            unselectedItemColor: AppColors.textSecondary,
+            unselectedItemColor:
+                theme.textTheme.bodySmall?.color ?? theme.iconTheme.color,
             selectedFontSize: 12,
             unselectedFontSize: 12,
             iconSize: 26,
             showUnselectedLabels: true,
             type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
+            backgroundColor:
+                theme.bottomNavigationBarTheme.backgroundColor ??
+                theme.cardColor,
             elevation: 10,
             items: const [
               BottomNavigationBarItem(

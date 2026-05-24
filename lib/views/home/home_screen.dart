@@ -17,9 +17,10 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final HomeController homeC = Get.put(HomeController());
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: RefreshIndicator(
           color: AppColors.primary,
@@ -74,11 +75,11 @@ class HomeScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.cardColor,
                     borderRadius: BorderRadius.circular(30),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withAlpha(10),
+                        color: theme.shadowColor.withAlpha(10),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -89,24 +90,21 @@ class HomeScreen extends StatelessWidget {
                     onTap: () => Get.to(() => SearchScreen()),
                     decoration: InputDecoration(
                       hintText: 'Cari lokasi, nama kost, atau fasilitas',
-                      hintStyle: const TextStyle(
-                        color: AppColors.textSecondary,
+                      hintStyle: TextStyle(
+                        color: theme.textTheme.bodySmall?.color,
                         fontSize: 13,
                       ),
                       border: InputBorder.none,
-                      icon: const Icon(
-                        Icons.search,
-                        color: AppColors.textSecondary,
-                      ),
+                      icon: Icon(Icons.search, color: theme.iconTheme.color),
                       suffixIcon: Container(
                         margin: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: AppColors.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.tune,
-                          color: Colors.white,
+                          color: theme.colorScheme.onPrimary,
                           size: 18,
                         ),
                       ),
@@ -130,6 +128,7 @@ class HomeScreen extends StatelessWidget {
                         return Padding(
                           padding: const EdgeInsets.only(right: 16),
                           child: _buildCategoryItem(
+                            context,
                             homeC,
                             cat['icon'],
                             cat['label'],
@@ -155,10 +154,10 @@ class HomeScreen extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () => Get.to(() => SearchScreen()),
-                      child: const Text(
+                      child: Text(
                         'Lihat Semua >',
                         style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color: theme.textTheme.bodySmall?.color,
                           fontSize: 12,
                         ),
                       ),
@@ -180,13 +179,10 @@ class HomeScreen extends StatelessWidget {
                   }
 
                   if (homeC.filteredKosts.isEmpty) {
-                    return const Center(
-                      child: Padding(
+                    return Center(
+                      child: const Padding(
                         padding: EdgeInsets.all(20),
-                        child: Text(
-                          'Tidak ada data kost',
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
+                        child: Text('Tidak ada data kost', style: TextStyle()),
                       ),
                     );
                   }
@@ -196,7 +192,10 @@ class HomeScreen extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: homeC.filteredKosts.length,
                     itemBuilder: (context, index) {
-                      return _buildKostCard(homeC.filteredKosts[index]);
+                      return _buildKostCard(
+                        context,
+                        homeC.filteredKosts[index],
+                      );
                     },
                   );
                 }),
@@ -208,7 +207,13 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryItem(HomeController homeC, IconData icon, String label) {
+  Widget _buildCategoryItem(
+    BuildContext context,
+    HomeController homeC,
+    IconData icon,
+    String label,
+  ) {
+    final theme = Theme.of(context);
     final isSelected = homeC.selectedFilter.value == label;
 
     return GestureDetector(
@@ -219,15 +224,17 @@ class HomeScreen extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : Colors.white,
+              color: isSelected ? AppColors.primary : theme.cardColor,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isSelected ? AppColors.primary : Colors.grey.shade200,
+                color: isSelected ? AppColors.primary : theme.dividerColor,
               ),
             ),
             child: Icon(
               icon,
-              color: isSelected ? Colors.white : AppColors.textPrimary,
+              color: isSelected
+                  ? theme.colorScheme.onPrimary
+                  : theme.iconTheme.color ?? theme.textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -235,7 +242,9 @@ class HomeScreen extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              color: isSelected
+                  ? AppColors.primary
+                  : theme.textTheme.bodySmall?.color,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -244,13 +253,14 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildKostCard(Kost kost) {
+  Widget _buildKostCard(BuildContext context, Kost kost) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => Get.to(() => DetailScreen(kost: kost)),
       child: Container(
         margin: const EdgeInsets.only(bottom: 18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -271,9 +281,14 @@ class HomeScreen extends StatelessWidget {
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         height: 190,
-                        color: Colors.grey.shade300,
-                        child: const Center(
-                          child: Icon(Icons.image_not_supported),
+                        color: theme.dividerColor.withAlpha(
+                          (0.4 * 255).round(),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: theme.iconTheme.color,
+                          ),
                         ),
                       );
                     },
@@ -285,11 +300,11 @@ class HomeScreen extends StatelessWidget {
                   top: 12,
                   right: 12,
                   child: CircleAvatar(
-                    backgroundColor: Colors.white,
+                    backgroundColor: theme.cardColor,
                     radius: 16,
                     child: Icon(
                       Icons.favorite_border,
-                      color: Colors.grey.shade700,
+                      color: theme.textTheme.bodyLarge?.color,
                       size: 18,
                     ),
                   ),
@@ -305,7 +320,7 @@ class HomeScreen extends StatelessWidget {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withAlpha(140),
+                      color: theme.shadowColor.withAlpha((0.55 * 255).round()),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -314,8 +329,8 @@ class HomeScreen extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           kost.rating.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -340,16 +355,16 @@ class HomeScreen extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.location_on,
                           size: 14,
-                          color: Colors.white,
+                          color: theme.colorScheme.onPrimary,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${kost.distance.toStringAsFixed(1)} km',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: theme.colorScheme.onPrimary,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -409,9 +424,9 @@ class HomeScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           kost.location,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: theme.textTheme.bodySmall?.color,
                           ),
                         ),
                       ),
@@ -491,6 +506,7 @@ class _PromoBannerState extends State<_PromoBanner> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         AspectRatio(
@@ -532,7 +548,7 @@ class _PromoBannerState extends State<_PromoBanner> {
               decoration: BoxDecoration(
                 color: _currentPage == index
                     ? AppColors.primary
-                    : Colors.grey.shade300,
+                    : theme.dividerColor,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),

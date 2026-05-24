@@ -11,15 +11,17 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Get.theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Pesan',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -32,24 +34,22 @@ class ChatScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: theme.dividerColor),
               ),
               child: TextField(
                 onChanged: chatC.updateSearchQuery,
-                decoration: const InputDecoration(
+                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                decoration: InputDecoration(
                   hintText: 'Cari obrolan...',
                   hintStyle: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: theme.textTheme.bodySmall?.color,
                     fontSize: 14,
                   ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: AppColors.textSecondary,
-                  ),
+                  prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
@@ -57,16 +57,16 @@ class ChatScreen extends StatelessWidget {
           Expanded(
             child: Obx(() {
               final filteredChatList = chatC.filteredChatList;
-              
+
               if (filteredChatList.isEmpty) {
                 return const Center(
                   child: Text(
                     'Tidak ada obrolan ditemukan.',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(),
                   ),
                 );
               }
-              
+
               return ListView.builder(
                 padding: const EdgeInsets.only(bottom: 12),
                 itemCount: filteredChatList.length,
@@ -75,20 +75,25 @@ class ChatScreen extends StatelessWidget {
                   return Dismissible(
                     key: Key(chat.name),
                     direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      color: Colors.red,
-                      child: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.white,
-                        size: 28,
-                      ),
+                    background: Builder(
+                      builder: (context) {
+                        final theme = Theme.of(context);
+                        return Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          color: theme.colorScheme.error,
+                          child: Icon(
+                            Icons.delete_outline,
+                            color: theme.colorScheme.onError,
+                            size: 28,
+                          ),
+                        );
+                      },
                     ),
                     confirmDismiss: (direction) async {
                       return await Get.dialog<bool>(
                         Dialog(
-                          backgroundColor: Colors.white,
+                          backgroundColor: theme.colorScheme.surface,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -100,35 +105,85 @@ class ChatScreen extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: Colors.red.withAlpha((0.1 * 255).round()),
+                                    color: theme.colorScheme.error.withAlpha(
+                                      (0.1 * 255).round(),
+                                    ),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.delete_outline, color: Colors.red, size: 32),
+                                  child: Icon(
+                                    Icons.delete_outline,
+                                    color: theme.colorScheme.error,
+                                    size: 32,
+                                  ),
                                 ),
                                 const SizedBox(height: 20),
-                                const Text('Hapus Obrolan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                Text(
+                                  'Hapus Obrolan',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.textTheme.bodyLarge?.color,
+                                  ),
+                                ),
                                 const SizedBox(height: 8),
-                                const Text(
+                                Text(
                                   'Apakah Anda yakin ingin menghapus obrolan ini secara permanen?',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+                                  style: TextStyle(
+                                    color: theme.textTheme.bodySmall?.color,
+                                    height: 1.5,
+                                  ),
                                 ),
                                 const SizedBox(height: 24),
                                 Row(
                                   children: [
                                     Expanded(
                                       child: OutlinedButton(
-                                        style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), side: BorderSide(color: Colors.grey.shade300)),
-                                        onPressed: () => Get.back(result: false),
-                                        child: const Text('Batal', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold)),
+                                        style: OutlinedButton.styleFrom(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          side: BorderSide(
+                                            color: theme.dividerColor,
+                                          ),
+                                        ),
+                                        onPressed: () =>
+                                            Get.back(result: false),
+                                        child: Text(
+                                          'Batal',
+                                          style: TextStyle(
+                                            color: theme
+                                                .textTheme
+                                                .bodySmall
+                                                ?.color,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: ElevatedButton(
-                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              theme.colorScheme.error,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          elevation: 0,
+                                        ),
                                         onPressed: () => Get.back(result: true),
-                                        child: const Text('Hapus', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                        child: Text(
+                                          'Hapus',
+                                          style: TextStyle(
+                                            color: theme.colorScheme.onError,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -141,11 +196,12 @@ class ChatScreen extends StatelessWidget {
                     },
                     onDismissed: (direction) {
                       chatC.deleteChat(chat.name);
+                      final theme = Theme.of(context);
                       Get.snackbar(
                         'Berhasil',
                         'Obrolan dengan ${chat.name} telah dihapus',
-                        backgroundColor: Colors.green,
-                        colorText: Colors.white,
+                        backgroundColor: theme.colorScheme.secondary,
+                        colorText: theme.colorScheme.onSecondary,
                         snackPosition: SnackPosition.BOTTOM,
                         margin: const EdgeInsets.all(16),
                       );
@@ -169,7 +225,8 @@ class ChatScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Expanded(
                                         child: Text(
@@ -186,7 +243,10 @@ class ChatScreen extends StatelessWidget {
                                         style: TextStyle(
                                           color: chat.unread > 0
                                               ? AppColors.primary
-                                              : AppColors.textSecondary,
+                                              : theme
+                                                    .textTheme
+                                                    .bodySmall
+                                                    ?.color,
                                           fontSize: 12,
                                           fontWeight: chat.unread > 0
                                               ? FontWeight.bold
@@ -197,15 +257,22 @@ class ChatScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 6),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Expanded(
                                         child: Text(
                                           chat.lastMessage,
                                           style: TextStyle(
                                             color: chat.unread > 0
-                                                ? AppColors.textPrimary
-                                                : AppColors.textSecondary,
+                                                ? theme
+                                                      .textTheme
+                                                      .bodyLarge
+                                                      ?.color
+                                                : theme
+                                                      .textTheme
+                                                      .bodySmall
+                                                      ?.color,
                                             fontWeight: chat.unread > 0
                                                 ? FontWeight.w600
                                                 : FontWeight.normal,
@@ -223,8 +290,9 @@ class ChatScreen extends StatelessWidget {
                                           ),
                                           child: Text(
                                             chat.unread.toString(),
-                                            style: const TextStyle(
-                                              color: Colors.white,
+                                            style: TextStyle(
+                                              color:
+                                                  theme.colorScheme.onPrimary,
                                               fontSize: 10,
                                               fontWeight: FontWeight.bold,
                                             ),

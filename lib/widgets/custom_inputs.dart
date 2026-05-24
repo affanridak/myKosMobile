@@ -25,12 +25,13 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: TextField(
         controller: controller,
@@ -41,15 +42,17 @@ class CustomTextField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-            color: AppColors.textSecondary.withAlpha((0.5 * 255).round()),
+            color: theme.textTheme.bodySmall?.color?.withAlpha(
+              (0.5 * 255).round(),
+            ),
             fontSize: 14,
           ),
-          prefixIcon: Icon(icon, color: AppColors.textSecondary),
+          prefixIcon: Icon(icon, color: theme.iconTheme.color),
           suffixIcon: showVisibilityToggle
               ? IconButton(
                   icon: Icon(
                     isPassword ? Icons.visibility_off : Icons.visibility,
-                    color: AppColors.textSecondary,
+                    color: theme.iconTheme.color,
                   ),
                   onPressed: onToggleVisibility,
                 )
@@ -79,31 +82,31 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SizedBox(
-      width: double.infinity,
       height: 54,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          elevation: 0,
         ),
-        onPressed: isLoading ? () {} : onPressed,
+        onPressed: isLoading ? null : onPressed,
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 height: 24,
                 width: 24,
                 child: CircularProgressIndicator(
-                  color: Colors.white,
+                  color: theme.colorScheme.onPrimary,
                   strokeWidth: 2.5,
                 ),
               )
             : Text(
                 text,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),

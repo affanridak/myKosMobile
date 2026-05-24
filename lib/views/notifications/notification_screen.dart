@@ -39,19 +39,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
+        title: Text(
           'Notifikasi',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -59,18 +61,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.done_all, color: AppColors.primary),
+            icon: Icon(Icons.done_all, color: AppColors.primary),
             onPressed: () {
               setState(() {
                 for (var notif in notifications) {
                   notif['isRead'] = true;
                 }
               });
+              final theme = Theme.of(context);
               Get.snackbar(
                 'Berhasil',
                 'Semua notifikasi telah ditandai sebagai dibaca',
-                backgroundColor: Colors.green,
-                colorText: Colors.white,
+                backgroundColor: theme.colorScheme.secondary,
+                colorText: theme.colorScheme.onSecondary,
               );
             },
           ),
@@ -87,17 +90,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
             background: Container(
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              color: Colors.red,
-              child: const Icon(
+              color: theme.colorScheme.error,
+              child: Icon(
                 Icons.delete_outline,
-                color: Colors.white,
+                color: theme.colorScheme.onError,
                 size: 28,
               ),
             ),
             confirmDismiss: (direction) async {
               return await Get.dialog<bool>(
                 Dialog(
-                  backgroundColor: Colors.white,
+                  backgroundColor: theme.colorScheme.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -109,29 +112,32 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.red.withAlpha((0.1 * 255).round()),
+                            color: theme.colorScheme.error.withAlpha(
+                              (0.1 * 255).round(),
+                            ),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.delete_outline,
-                            color: Colors.red,
+                            color: theme.colorScheme.error,
                             size: 32,
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const Text(
+                        Text(
                           'Hapus Notifikasi',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Apakah Anda yakin ingin menghapus notifikasi ini?',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: theme.textTheme.bodySmall?.color,
                             height: 1.5,
                           ),
                         ),
@@ -144,13 +150,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  side: BorderSide(color: Colors.grey.shade300),
+                                  side: BorderSide(color: theme.dividerColor),
                                 ),
                                 onPressed: () => Get.back(result: false),
-                                child: const Text(
+                                child: Text(
                                   'Batal',
                                   style: TextStyle(
-                                    color: AppColors.textSecondary,
+                                    color: theme.textTheme.bodySmall?.color,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -160,17 +166,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             Expanded(
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
+                                  backgroundColor: theme.colorScheme.error,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   elevation: 0,
                                 ),
                                 onPressed: () => Get.back(result: true),
-                                child: const Text(
+                                child: Text(
                                   'Hapus',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: theme.colorScheme.onError,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -188,11 +194,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
               setState(() {
                 notifications.removeAt(index);
               });
+              final theme = Theme.of(context);
               Get.snackbar(
                 'Berhasil',
                 'Notifikasi telah dihapus',
-                backgroundColor: Colors.green,
-                colorText: Colors.white,
+                backgroundColor: theme.colorScheme.secondary,
+                colorText: theme.colorScheme.onSecondary,
                 snackPosition: SnackPosition.BOTTOM,
                 margin: const EdgeInsets.all(16),
               );
@@ -212,8 +219,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
     switch (notif['type']) {
       case 'success':
         icon = Icons.check_circle_outline;
-        iconColor = Colors.green;
-        bgColor = Colors.green.withAlpha((0.1 * 255).round());
+        iconColor = Theme.of(context).colorScheme.secondary;
+        bgColor = Theme.of(
+          context,
+        ).colorScheme.secondary.withAlpha((0.1 * 255).round());
         break;
       case 'warning':
         icon = Icons.warning_amber_rounded;
@@ -227,20 +236,24 @@ class _NotificationScreenState extends State<NotificationScreen> {
         break;
       default:
         icon = Icons.notifications_none;
-        iconColor = Colors.grey;
-        bgColor = Colors.grey.withAlpha((0.1 * 255).round());
+        iconColor = Theme.of(context).iconTheme.color ?? Colors.grey;
+        bgColor = (Theme.of(context).iconTheme.color ?? Colors.grey).withAlpha(
+          (0.1 * 255).round(),
+        );
     }
+
+    final theme = Theme.of(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: notif['isRead']
-            ? Colors.white
+            ? theme.cardColor
             : AppColors.primary.withAlpha((0.03 * 255).round()),
         borderRadius: BorderRadius.circular(16),
         border: notif['isRead']
-            ? Border.all(color: Colors.grey.shade200)
+            ? Border.all(color: theme.dividerColor)
             : Border.all(
                 color: AppColors.primary.withAlpha((0.3 * 255).round()),
               ),
@@ -264,16 +277,17 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     Expanded(
                       child: Text(
                         notif['title'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
+                          color: theme.textTheme.bodyLarge?.color,
                         ),
                       ),
                     ),
                     Text(
                       notif['time'],
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: theme.textTheme.bodySmall?.color,
                         fontSize: 10,
                       ),
                     ),
@@ -282,8 +296,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 const SizedBox(height: 6),
                 Text(
                   notif['desc'],
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: theme.textTheme.bodySmall?.color,
                     fontSize: 12,
                     height: 1.4,
                   ),

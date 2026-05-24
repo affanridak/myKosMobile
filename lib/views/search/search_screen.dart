@@ -12,19 +12,24 @@ class SearchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back,
+            color: theme.iconTheme.color ?? theme.textTheme.bodyLarge?.color,
+          ),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
+        title: Text(
           'Filter Pencarian',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -33,10 +38,7 @@ class SearchScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: searchC.resetFilters,
-            child: const Text(
-              'Reset',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
+            child: const Text('Reset', style: TextStyle()),
           ),
         ],
       ),
@@ -45,22 +47,26 @@ class SearchScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Nama atau Lokasi',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: TextField(
                 controller: searchC.locationController,
-                style: const TextStyle(),
+                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                 decoration: InputDecoration(
                   hintText: 'Misal: Jember, Jawa Timur',
-                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  hintStyle: TextStyle(color: theme.textTheme.bodySmall?.color),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -72,9 +78,13 @@ class SearchScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            const Text(
+            Text(
               'Tipe Kost',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             const SizedBox(height: 12),
             Obx(
@@ -91,13 +101,13 @@ class SearchScreen extends StatelessWidget {
                         selectedColor: AppColors.primary,
                         labelStyle: TextStyle(
                           color: isSelected
-                              ? Colors.white
-                              : AppColors.textPrimary,
+                              ? theme.colorScheme.onPrimary
+                              : theme.textTheme.bodyLarge?.color,
                           fontWeight: isSelected
                               ? FontWeight.bold
                               : FontWeight.normal,
                         ),
-                        backgroundColor: Colors.grey.shade100,
+                        backgroundColor: theme.cardColor,
                         side: BorderSide.none,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -115,9 +125,13 @@ class SearchScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            const Text(
+            Text(
               'Rentang Harga',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             const SizedBox(height: 12),
             Obx(
@@ -127,7 +141,7 @@ class SearchScreen extends StatelessWidget {
                 max: 5000000,
                 divisions: 50,
                 activeColor: AppColors.primary,
-                inactiveColor: Colors.grey.shade300,
+                inactiveColor: theme.dividerColor,
                 labels: RangeLabels(
                   'Rp${(searchC.priceRange.value.start / 1000).round()} rb',
                   'Rp${(searchC.priceRange.value.end / 1000000).toStringAsFixed(1)} jt+',
@@ -143,15 +157,15 @@ class SearchScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Rp${(searchC.priceRange.value.start / 1000).round()} rb',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: theme.textTheme.bodySmall?.color,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
                     'Rp${(searchC.priceRange.value.end / 1000000).toStringAsFixed(1)} jt+',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: theme.textTheme.bodySmall?.color,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -160,9 +174,13 @@ class SearchScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            const Text(
+            Text(
               'Fasilitas',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             const SizedBox(height: 12),
             Obx(
@@ -178,12 +196,14 @@ class SearchScreen extends StatelessWidget {
                     selected: isSelected,
                     selectedColor: AppColors.primary,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                      color: isSelected
+                          ? theme.colorScheme.onPrimary
+                          : theme.textTheme.bodyLarge?.color,
                       fontWeight: isSelected
                           ? FontWeight.bold
                           : FontWeight.normal,
                     ),
-                    backgroundColor: Colors.grey.shade100,
+                    backgroundColor: theme.cardColor,
                     side: BorderSide.none,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -202,11 +222,11 @@ class SearchScreen extends StatelessWidget {
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: theme.cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black12,
+              color: theme.shadowColor.withAlpha((0.12 * 255).round()),
               blurRadius: 10,
               offset: Offset(0, -5),
             ),

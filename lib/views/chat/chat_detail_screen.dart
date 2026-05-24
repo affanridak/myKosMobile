@@ -7,13 +7,18 @@ class ChatDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
         elevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back,
+            color: theme.iconTheme.color ?? theme.textTheme.bodyLarge?.color,
+          ),
           onPressed: () => Get.back(),
         ),
         titleSpacing: 0,
@@ -29,17 +34,20 @@ class ChatDetailScreen extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Kost Nyaman Setiabudi',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: theme.textTheme.bodyLarge?.color,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   'Online',
-                  style: TextStyle(color: Colors.green.shade600, fontSize: 11),
+                  style: TextStyle(
+                    color: theme.colorScheme.secondary,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -47,7 +55,10 @@ class ChatDetailScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
+            icon: Icon(
+              Icons.more_vert,
+              color: theme.iconTheme.color ?? theme.textTheme.bodyLarge?.color,
+            ),
             onPressed: () {},
           ),
         ],
@@ -59,37 +70,58 @@ class ChatDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               children: [
                 _buildChatBubble(
+                  context,
                   'Halo, saya tertarik dengan kamar ini. Apakah masih tersedia?',
                   true,
                   '10:30',
                 ),
-                _buildChatBubble('Halo! Masih tersedia ya 😊', false, '10:32'),
                 _buildChatBubble(
+                  context,
+                  'Halo! Masih tersedia ya 😊',
+                  false,
+                  '10:32',
+                ),
+                _buildChatBubble(
+                  context,
                   'Apa saja fasilitas yang didapatkan kak?',
                   true,
                   '10:33',
                 ),
                 _buildChatBubble(
+                  context,
                   'Fasilitas lengkap: Wi-Fi, AC, kamar mandi dalam, dapur, dan parkir ya.',
                   false,
                   '10:35',
                 ),
                 _buildChatBubble(
+                  context,
                   'Baik, boleh saya jadwalkan untuk lihat langsung?',
                   true,
                   '10:36',
                 ),
-                _buildChatBubble('Boleh, kapan ya? 😊', false, '10:37'),
+                _buildChatBubble(
+                  context,
+                  'Boleh, kapan ya? 😊',
+                  false,
+                  '10:37',
+                ),
               ],
             ),
           ),
-          _buildMessageInput(),
+          _buildMessageInput(context),
         ],
       ),
     );
   }
 
-  Widget _buildChatBubble(String text, bool isMe, String time) {
+  Widget _buildChatBubble(
+    BuildContext context,
+    String text,
+    bool isMe,
+    String time,
+  ) {
+    final theme = Theme.of(context);
+
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -97,7 +129,7 @@ class ChatDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         constraints: const BoxConstraints(maxWidth: 280),
         decoration: BoxDecoration(
-          color: isMe ? AppColors.primary : Colors.white,
+          color: isMe ? AppColors.primary : theme.cardColor,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -108,7 +140,7 @@ class ChatDetailScreen extends StatelessWidget {
               ? []
               : [
                   BoxShadow(
-                    color: Colors.black.withAlpha((0.05 * 255).round()),
+                    color: theme.shadowColor.withAlpha((0.05 * 255).round()),
                     blurRadius: 5,
                   ),
                 ],
@@ -119,7 +151,9 @@ class ChatDetailScreen extends StatelessWidget {
             Text(
               text,
               style: TextStyle(
-                color: isMe ? Colors.white : AppColors.textPrimary,
+                color: isMe
+                    ? theme.colorScheme.onPrimary
+                    : theme.textTheme.bodyLarge?.color,
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -128,7 +162,9 @@ class ChatDetailScreen extends StatelessWidget {
             Text(
               time,
               style: TextStyle(
-                color: isMe ? Colors.white70 : AppColors.textSecondary,
+                color: isMe
+                    ? theme.colorScheme.onPrimary.withValues(alpha: 0.7)
+                    : theme.textTheme.bodySmall?.color,
                 fontSize: 10,
               ),
             ),
@@ -138,30 +174,32 @@ class ChatDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMessageInput() {
+  Widget _buildMessageInput(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: theme.cardColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: theme.shadowColor.withAlpha((0.12 * 255).round()),
             blurRadius: 10,
-            offset: Offset(0, -2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
       child: SafeArea(
         child: Row(
           children: [
-            const Icon(Icons.attach_file, color: AppColors.textSecondary),
+            Icon(Icons.attach_file, color: theme.iconTheme.color),
             const SizedBox(width: 12),
             Expanded(
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Ketik pesan...',
-                  hintStyle: const TextStyle(
-                    color: AppColors.textSecondary,
+                  hintStyle: TextStyle(
+                    color: theme.textTheme.bodySmall?.color,
                     fontSize: 14,
                   ),
                   border: OutlineInputBorder(
@@ -169,7 +207,7 @@ class ChatDetailScreen extends StatelessWidget {
                     borderSide: BorderSide.none,
                   ),
                   filled: true,
-                  fillColor: AppColors.background,
+                  fillColor: theme.scaffoldBackgroundColor,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 8,
@@ -181,7 +219,11 @@ class ChatDetailScreen extends StatelessWidget {
             CircleAvatar(
               backgroundColor: AppColors.primary,
               child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.white, size: 18),
+                icon: Icon(
+                  Icons.send,
+                  color: theme.colorScheme.onPrimary,
+                  size: 18,
+                ),
                 onPressed: () {},
               ),
             ),

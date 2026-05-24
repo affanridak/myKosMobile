@@ -43,8 +43,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -55,8 +56,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onPressed: () => Get.offAll(() => LoginScreen()),
                 child: Text(
                   'Lewati',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: theme.textTheme.bodySmall?.color,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -90,19 +91,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           data['title'],
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+                            color: theme.textTheme.bodyLarge?.color,
                           ),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           data['desc'],
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: AppColors.textSecondary,
+                            color: theme.textTheme.bodySmall?.color,
                             height: 1.5,
                           ),
                         ),
@@ -129,7 +130,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           color: _currentPage == index
                               ? AppColors.primary
-                              : Colors.grey.shade300,
+                              : theme.dividerColor,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -160,8 +161,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         _currentPage == _onboardingData.length - 1
                             ? 'Mulai Sekarang'
                             : 'Selanjutnya',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: theme.colorScheme.onPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),

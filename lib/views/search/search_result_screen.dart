@@ -53,19 +53,24 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back,
+            color: theme.iconTheme.color ?? theme.textTheme.bodyLarge?.color,
+          ),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
+        title: Text(
           'Hasil Pencarian',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -73,7 +78,10 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
+            icon: Icon(
+              Icons.refresh,
+              color: theme.iconTheme.color ?? theme.textTheme.bodyLarge?.color,
+            ),
             onPressed: _fetchAll,
           ),
         ],
@@ -81,33 +89,45 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _displayResults.isEmpty
-              ? _buildEmptyState()
-              : _buildListResults(),
+          ? _buildEmptyState(context)
+          : _buildListResults(context),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 80, color: Colors.grey.shade400),
+          Icon(
+            Icons.search_off,
+            size: 80,
+            color: theme.textTheme.bodySmall?.color,
+          ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Oops! Kost tidak ditemukan',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.bodyLarge?.color,
+            ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Coba sesuaikan filter pencarianmu.',
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: theme.textTheme.bodySmall?.color),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildListResults() {
+  Widget _buildListResults(BuildContext context) {
+    final theme = Theme.of(context);
+
     return ListView.builder(
       padding: const EdgeInsets.all(24),
       itemCount: _displayResults.length,
@@ -118,11 +138,11 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
           child: Container(
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withAlpha((0.02 * 255).round()),
+                  color: theme.shadowColor.withAlpha((0.02 * 255).round()),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -130,7 +150,7 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
             ),
             child: Row(
               children: [
-                _buildImage(kost.imageUrl),
+                _buildImage(context, kost.imageUrl),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -142,13 +162,16 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
                         Text(
                           kost.name,
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        _buildLocationInfo(kost.location),
-                        if (kost.distance > 0) _buildDistanceInfo(kost.distance),
+                        _buildLocationInfo(context, kost.location),
+                        if (kost.distance > 0)
+                          _buildDistanceInfo(kost.distance),
                         const SizedBox(height: 8),
                         _buildPriceAndRating(kost.price, kost.rating),
                       ],
@@ -163,7 +186,9 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
     );
   }
 
-  Widget _buildImage(String url) {
+  Widget _buildImage(BuildContext context, String url) {
+    final theme = Theme.of(context);
+
     return ClipRRect(
       borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
       child: url.startsWith('http')
@@ -172,19 +197,17 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
               width: 120,
               height: 120,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 120,
                 height: 120,
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.image_not_supported),
+                color: theme.dividerColor.withAlpha((0.4 * 255).round()),
+                child: Icon(
+                  Icons.image_not_supported,
+                  color: theme.iconTheme.color,
+                ),
               ),
             )
-          : Image.asset(
-              url,
-              width: 120,
-              height: 120,
-              fit: BoxFit.cover,
-            ),
+          : Image.asset(url, width: 120, height: 120, fit: BoxFit.cover),
     );
   }
 
@@ -206,15 +229,24 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
     );
   }
 
-  Widget _buildLocationInfo(String location) {
+  Widget _buildLocationInfo(BuildContext context, String location) {
+    final theme = Theme.of(context);
+
     return Row(
       children: [
-        const Icon(Icons.location_on, size: 12, color: AppColors.textSecondary),
+        Icon(
+          Icons.location_on,
+          size: 12,
+          color: theme.textTheme.bodySmall?.color,
+        ),
         const SizedBox(width: 4),
         Expanded(
           child: Text(
             location,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+            style: TextStyle(
+              color: theme.textTheme.bodySmall?.color,
+              fontSize: 11,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -255,9 +287,10 @@ class _SearchResultScreenState extends State<SearchResultScreen> {
           children: [
             const Icon(Icons.star, size: 14, color: AppColors.warning),
             const SizedBox(width: 4),
-            Text('$rating',
-                style:
-                    const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            Text(
+              '$rating',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ],

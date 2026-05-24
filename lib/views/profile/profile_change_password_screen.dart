@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../theme/app_colors.dart';
 import '../../widgets/custom_inputs.dart';
 import '../../controllers/profile_change_password_controller.dart';
 
@@ -12,20 +11,21 @@ class ProfileChangePasswordScreen extends StatelessWidget {
     final ProfileChangePasswordController controller = Get.put(
       ProfileChangePasswordController(),
     );
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
         title: Text(
           'Ubah Password',
-          style: const TextStyle(
-            color: AppColors.textPrimary,
+          style: TextStyle(
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -39,17 +39,17 @@ class ProfileChangePasswordScreen extends StatelessWidget {
           children: [
             Text(
               'Buat Password Baru',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: theme.textTheme.titleMedium?.color,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Pastikan password baru Anda unik dan tidak mudah ditebak untuk menjaga keamanan akun Anda.',
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: theme.textTheme.bodySmall?.color,
                 height: 1.5,
               ),
             ),

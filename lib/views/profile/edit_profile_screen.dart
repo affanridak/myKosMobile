@@ -35,7 +35,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() {});
   }
 
-  Future<void> _confirmAndSave() async {
+  Future<void> _confirmAndSave(BuildContext context) async {
+    final theme = Theme.of(context);
     final name = controller.nameController.text.trim();
     final phone = controller.phoneController.text.trim();
 
@@ -43,8 +44,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       Get.snackbar(
         'Gagal',
         'Nama tidak boleh kosong',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: theme.colorScheme.error,
+        colorText: theme.colorScheme.onError,
       );
       return;
     }
@@ -55,8 +56,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Get.snackbar(
           'Gagal',
           'Nomor HP tidak valid (contoh: 081234567890)',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+          backgroundColor: theme.colorScheme.error,
+          colorText: theme.colorScheme.onError,
         );
         return;
       }
@@ -64,7 +65,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     final confirmed = await Get.dialog<bool>(
       Dialog(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.dialogTheme.backgroundColor ?? theme.cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -84,15 +85,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Simpan Perubahan',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textTheme.titleMedium?.color,
+                ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Apakah Anda yakin ingin menyimpan perubahan profil?',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+                style: TextStyle(
+                  color: theme.textTheme.bodySmall?.color,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 24),
               Row(
@@ -100,7 +108,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Get.back(result: false),
-                      child: const Text('Batal'),
+                      child: Text(
+                        'Batal',
+                        style: TextStyle(
+                          color: theme.textTheme.bodySmall?.color,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -124,16 +137,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Get.snackbar(
           'Sukses',
           res.message,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
+          backgroundColor: theme.colorScheme.secondary,
+          colorText: theme.colorScheme.onSecondary,
         );
         Get.back();
       } else {
         Get.snackbar(
           'Gagal',
           res.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+          backgroundColor: theme.colorScheme.error,
+          colorText: theme.colorScheme.onError,
         );
       }
       setState(() {});
@@ -142,19 +155,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
+        title: Text(
           'Ubah Profil',
           style: TextStyle(
-            color: Colors.black,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -175,10 +190,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       final img = controller.pickedImage.value;
                       ImageProvider? provider;
                       if (img != null) {
-                        if (img is Uint8List)
+                        if (img is Uint8List) {
                           provider = MemoryImage(img);
-                        else if (img is File)
+                        } else if (img is File) {
                           provider = FileImage(img);
+                        }
                       } else if (controller.avatarUrl.value.isNotEmpty) {
                         provider = NetworkImage(controller.avatarUrl.value);
                       }
@@ -192,9 +208,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     ? controller.nameController.text[0]
                                           .toUpperCase()
                                     : '?',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 40,
-                                  color: Colors.white,
+                                  color: theme.colorScheme.onPrimary,
                                   fontWeight: FontWeight.bold,
                                 ),
                               )
@@ -205,9 +221,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       bottom: 0,
                       right: 4,
                       child: Container(
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white,
+                          color: theme.cardColor,
                         ),
                         padding: const EdgeInsets.all(4),
                         child: const Icon(
@@ -223,18 +239,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             const SizedBox(height: 32),
             _buildInputField(
+              context,
               'Nama Lengkap',
               Icons.person_outline,
               controller.nameController,
             ),
             const SizedBox(height: 16),
             _buildInputFieldReadOnly(
+              context,
               'Email',
               Icons.email_outlined,
               controller.emailController,
             ),
             const SizedBox(height: 16),
             _buildInputField(
+              context,
               'Nomor Telepon',
               Icons.phone_outlined,
               controller.phoneController,
@@ -255,13 +274,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   onPressed: controller.isLoading.value
                       ? null
-                      : _confirmAndSave,
+                      : () => _confirmAndSave(context),
                   child: controller.isLoading.value
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
+                      ? CircularProgressIndicator(
+                          color: theme.colorScheme.onPrimary,
+                        )
+                      : Text(
                           'Simpan Perubahan',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: theme.colorScheme.onPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -276,30 +297,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildInputField(
+    BuildContext context,
     String label,
     IconData icon,
     TextEditingController controller, {
     TextInputType keyboardType = TextInputType.text,
   }) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: theme.textTheme.bodyMedium?.color,
+          ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border.all(
+              color: theme.dividerColor.withAlpha((0.45 * 255).round()),
+            ),
           ),
           child: TextFormField(
             controller: controller,
             keyboardType: keyboardType,
+            style: TextStyle(color: theme.textTheme.bodyMedium?.color),
             decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: Colors.grey.shade600),
+              prefixIcon: Icon(icon, color: theme.textTheme.bodySmall?.color),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -313,10 +344,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildInputFieldReadOnly(
+    BuildContext context,
     String label,
     IconData icon,
     TextEditingController controller,
   ) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -324,18 +358,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           children: [
             Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: theme.textTheme.bodyMedium?.color,
+              ),
             ),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: theme.dividerColor.withAlpha((0.2 * 255).round()),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
+              child: Text(
                 'Tidak dapat diubah',
-                style: TextStyle(fontSize: 10, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: theme.textTheme.bodySmall?.color,
+                ),
               ),
             ),
           ],
@@ -343,22 +384,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey.shade100,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(
+              color: theme.dividerColor.withAlpha((0.35 * 255).round()),
+            ),
           ),
           child: TextFormField(
             controller: controller,
             readOnly: true,
             decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: Colors.grey.shade400),
+              prefixIcon: Icon(icon, color: theme.textTheme.bodySmall?.color),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 14,
               ),
             ),
-            style: TextStyle(color: Colors.grey.shade500),
+            style: TextStyle(color: theme.textTheme.bodySmall?.color),
           ),
         ),
       ],

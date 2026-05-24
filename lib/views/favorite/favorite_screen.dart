@@ -11,16 +11,17 @@ class FavoriteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final FavoriteController controller = Get.put(FavoriteController());
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Favorit Saya',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -30,7 +31,12 @@ class FavoriteScreen extends StatelessWidget {
           Obx(
             () => controller.favorites.isNotEmpty
                 ? PopupMenuButton<String>(
-                    icon: const Icon(Icons.sort, color: AppColors.textPrimary),
+                    icon: Icon(
+                      Icons.sort,
+                      color:
+                          theme.iconTheme.color ??
+                          theme.textTheme.bodyLarge?.color,
+                    ),
                     onSelected: (value) => controller.sortFavorites(value),
                     itemBuilder: (context) => [
                       PopupMenuItem(
@@ -44,7 +50,7 @@ class FavoriteScreen extends StatelessWidget {
                                 : FontWeight.normal,
                             color: controller.selectedSort.value == 'Terbaru'
                                 ? AppColors.primary
-                                : AppColors.textPrimary,
+                                : theme.textTheme.bodyLarge?.color,
                           ),
                         ),
                       ),
@@ -59,7 +65,7 @@ class FavoriteScreen extends StatelessWidget {
                                 : FontWeight.normal,
                             color: controller.selectedSort.value == 'Termurah'
                                 ? AppColors.primary
-                                : AppColors.textPrimary,
+                                : theme.textTheme.bodyLarge?.color,
                           ),
                         ),
                       ),
@@ -82,12 +88,12 @@ class FavoriteScreen extends StatelessWidget {
                         width: 260,
                       ),
                       const SizedBox(height: 24),
-                      const Text(
+                      Text(
                         'Kamu belum punya favorit, temukan kos yang kamu suka',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16,
-                          color: AppColors.textSecondary,
+                          color: theme.textTheme.bodySmall?.color,
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -102,10 +108,10 @@ class FavoriteScreen extends StatelessWidget {
                             ),
                           ),
                           onPressed: () => Get.to(() => SearchScreen()),
-                          child: const Text(
+                          child: Text(
                             'Cari Kos Sekarang',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onPrimary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -126,17 +132,17 @@ class FavoriteScreen extends StatelessWidget {
                     background: Container(
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.symmetric(horizontal: 24),
-                      color: Colors.red,
-                      child: const Icon(
+                      color: theme.colorScheme.error,
+                      child: Icon(
                         Icons.delete_outline,
-                        color: Colors.white,
+                        color: theme.colorScheme.onError,
                         size: 28,
                       ),
                     ),
                     confirmDismiss: (direction) async {
                       return await Get.dialog<bool>(
                         Dialog(
-                          backgroundColor: Colors.white,
+                          backgroundColor: theme.colorScheme.surface,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -148,31 +154,32 @@ class FavoriteScreen extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: Colors.red.withAlpha(
+                                    color: theme.colorScheme.error.withAlpha(
                                       (0.1 * 255).round(),
                                     ),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.delete_outline,
-                                    color: Colors.red,
+                                    color: theme.colorScheme.error,
                                     size: 32,
                                   ),
                                 ),
                                 const SizedBox(height: 20),
-                                const Text(
+                                Text(
                                   'Hapus Favorit',
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
+                                    color: theme.textTheme.bodyLarge?.color,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                const Text(
+                                Text(
                                   'Apakah Anda yakin ingin menghapus kost ini dari daftar favorit?',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    color: AppColors.textSecondary,
+                                    color: theme.textTheme.bodySmall?.color,
                                     height: 1.5,
                                   ),
                                 ),
@@ -188,15 +195,18 @@ class FavoriteScreen extends StatelessWidget {
                                             ),
                                           ),
                                           side: BorderSide(
-                                            color: Colors.grey.shade300,
+                                            color: theme.dividerColor,
                                           ),
                                         ),
                                         onPressed: () =>
                                             Get.back(result: false),
-                                        child: const Text(
+                                        child: Text(
                                           'Batal',
                                           style: TextStyle(
-                                            color: AppColors.textSecondary,
+                                            color: theme
+                                                .textTheme
+                                                .bodySmall
+                                                ?.color,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -206,7 +216,8 @@ class FavoriteScreen extends StatelessWidget {
                                     Expanded(
                                       child: ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red,
+                                          backgroundColor:
+                                              theme.colorScheme.error,
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
                                               12,
@@ -215,10 +226,10 @@ class FavoriteScreen extends StatelessWidget {
                                           elevation: 0,
                                         ),
                                         onPressed: () => Get.back(result: true),
-                                        child: const Text(
+                                        child: Text(
                                           'Hapus',
                                           style: TextStyle(
-                                            color: Colors.white,
+                                            color: theme.colorScheme.onError,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -234,11 +245,12 @@ class FavoriteScreen extends StatelessWidget {
                     },
                     onDismissed: (direction) {
                       controller.removeFavorite(kost.id);
+                      final theme = Theme.of(context);
                       Get.snackbar(
                         'Berhasil',
                         '${kost.name} dihapus dari favorit',
-                        backgroundColor: Colors.green,
-                        colorText: Colors.white,
+                        backgroundColor: theme.colorScheme.secondary,
+                        colorText: theme.colorScheme.onSecondary,
                         snackPosition: SnackPosition.BOTTOM,
                         margin: const EdgeInsets.all(16),
                       );
@@ -249,11 +261,11 @@ class FavoriteScreen extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: theme.cardColor,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withAlpha(
+                              color: theme.shadowColor.withAlpha(
                                 (0.02 * 255).round(),
                               ),
                               blurRadius: 10,
@@ -291,9 +303,9 @@ class FavoriteScreen extends StatelessWidget {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      const Icon(
+                                      Icon(
                                         Icons.favorite,
-                                        color: Colors.red,
+                                        color: theme.colorScheme.error,
                                         size: 20,
                                       ),
                                     ],
@@ -304,14 +316,17 @@ class FavoriteScreen extends StatelessWidget {
                                       const Icon(
                                         Icons.location_on,
                                         size: 12,
-                                        color: AppColors.textSecondary,
+                                        color: AppColors.primary,
                                       ),
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
                                           kost.location,
-                                          style: const TextStyle(
-                                            color: AppColors.textSecondary,
+                                          style: TextStyle(
+                                            color: theme
+                                                .textTheme
+                                                .bodySmall
+                                                ?.color,
                                             fontSize: 11,
                                           ),
                                           overflow: TextOverflow.ellipsis,
@@ -326,9 +341,10 @@ class FavoriteScreen extends StatelessWidget {
                                     children: [
                                       Text(
                                         'Rp${kost.price}',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: AppColors.textPrimary,
+                                          color:
+                                              theme.textTheme.bodyLarge?.color,
                                           fontSize: 14,
                                         ),
                                       ),

@@ -11,8 +11,9 @@ class OtpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
@@ -24,18 +25,15 @@ class OtpScreen extends StatelessWidget {
                 children: [
                   IconButton(
                     onPressed: () => Get.back(),
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.textPrimary,
-                    ),
+                    icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     'Verifikasi OTP',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
                 ],
@@ -52,18 +50,18 @@ class OtpScreen extends StatelessWidget {
               const SizedBox(height: 20),
               Text(
                 'Masukkan Kode OTP ✉️',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 8),
               Obx(
                 () => Text(
                   'Kami telah mengirimkan 4 digit kode verifikasi ke email ${authC.recoveryEmail.value}.',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: theme.textTheme.bodySmall?.color,
                     height: 1.5,
                   ),
                 ),
@@ -95,7 +93,7 @@ class OtpScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Tidak menerima kode? ',
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: theme.textTheme.bodySmall?.color),
                   ),
                   GestureDetector(
                     onTap: () => authC.sendOtp(), // Resend OTP
@@ -121,6 +119,7 @@ class OtpScreen extends StatelessWidget {
     TextEditingController controller,
     bool autoFocus,
   ) {
+    final theme = Theme.of(context);
     return SizedBox(
       width: 60,
       height: 60,
@@ -130,18 +129,22 @@ class OtpScreen extends StatelessWidget {
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
-        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: theme.textTheme.bodyLarge?.color,
+        ),
         decoration: InputDecoration(
           counterText: '',
           filled: true,
-          fillColor: Colors.white,
+          fillColor: theme.cardColor,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.grey.shade200),
+            borderSide: BorderSide(color: theme.dividerColor),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.grey.shade200),
+            borderSide: BorderSide(color: theme.dividerColor),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),

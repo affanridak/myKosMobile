@@ -8,6 +8,8 @@ class TransactionHistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     // Data mock transaksi
     final List<Map<String, dynamic>> transactions = [
       {
@@ -15,37 +17,37 @@ class TransactionHistoryScreen extends StatelessWidget {
         'date': '20 April 2026',
         'amount': 'Rp1.805.000',
         'status': 'Berhasil',
-        'color': Colors.green,
+        'color': theme.colorScheme.secondary,
       },
       {
         'kostName': 'Kost Putri Mandiri',
         'date': '15 Maret 2026',
         'amount': 'Rp1.505.000',
         'status': 'Selesai',
-        'color': Colors.blue,
+        'color': theme.colorScheme.primary,
       },
       {
         'kostName': 'Green Kost Kemang',
         'date': '27 April 2026',
         'amount': 'Rp2.005.000',
         'status': 'Menunggu',
-        'color': Colors.orange,
+        'color': AppColors.warning,
       },
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
+        title: Text(
           'Riwayat Transaksi',
           style: TextStyle(
-            color: Colors.black,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -63,9 +65,11 @@ class TransactionHistoryScreen extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(
+                  color: theme.dividerColor.withAlpha((0.35 * 255).round()),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,8 +79,8 @@ class TransactionHistoryScreen extends StatelessWidget {
                     children: [
                       Text(
                         trx['date'],
-                        style: const TextStyle(
-                          color: Colors.grey,
+                        style: TextStyle(
+                          color: theme.textTheme.bodySmall?.color,
                           fontSize: 12,
                         ),
                       ),
@@ -123,16 +127,17 @@ class TransactionHistoryScreen extends StatelessWidget {
                           children: [
                             Text(
                               trx['kostName'],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
+                                color: theme.textTheme.bodyMedium?.color,
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
+                            Text(
                               'Sewa 1 Bulan',
                               style: TextStyle(
-                                color: Colors.grey,
+                                color: theme.textTheme.bodySmall?.color,
                                 fontSize: 12,
                               ),
                             ),
@@ -145,9 +150,12 @@ class TransactionHistoryScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Total Pembayaran',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        style: TextStyle(
+                          color: theme.textTheme.bodySmall?.color,
+                          fontSize: 12,
+                        ),
                       ),
                       Text(
                         trx['amount'],
