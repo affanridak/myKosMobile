@@ -17,19 +17,24 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back,
+            color: theme.iconTheme.color ?? theme.textTheme.bodyLarge?.color,
+          ),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
+        title: Text(
           'Metode Pembayaran',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -57,10 +62,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Total Pembayaran',
                         style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color: theme.textTheme.bodySmall?.color,
                           fontSize: 13,
                         ),
                       ),
@@ -98,24 +103,31 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             ),
             const SizedBox(height: 32),
 
-            const Text(
+            Text(
               'Transfer Virtual Account',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             const SizedBox(height: 16),
             _buildPaymentOption(
+              context,
               'BCA Virtual Account',
               'Dicek otomatis, bebas biaya',
               Icons.account_balance,
               Colors.blue.shade700,
             ),
             _buildPaymentOption(
+              context,
               'Mandiri Virtual Account',
               'Dicek otomatis',
               Icons.account_balance,
               Colors.yellow.shade700,
             ),
             _buildPaymentOption(
+              context,
               'BNI Virtual Account',
               'Dicek otomatis',
               Icons.account_balance,
@@ -123,24 +135,31 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             ),
 
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'E-Wallet',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
             ),
             const SizedBox(height: 16),
             _buildPaymentOption(
+              context,
               'GoPay',
               'Biaya admin Rp 1.000',
               Icons.account_balance_wallet,
               Colors.green,
             ),
             _buildPaymentOption(
+              context,
               'OVO',
               'Biaya admin Rp 1.000',
               Icons.account_balance_wallet,
               Colors.purple,
             ),
             _buildPaymentOption(
+              context,
               'Dana',
               'Biaya admin Rp 1.000',
               Icons.account_balance_wallet,
@@ -151,13 +170,13 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: theme.cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black12,
+              color: theme.shadowColor.withAlpha((0.12 * 255).round()),
               blurRadius: 10,
-              offset: Offset(0, -5),
+              offset: const Offset(0, -5),
             ),
           ],
         ),
@@ -168,10 +187,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Total Pembayaran',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: theme.textTheme.bodySmall?.color,
                       fontSize: 14,
                     ),
                   ),
@@ -200,7 +219,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     // Simulasi proses membuat Virtual Account
                     Get.dialog(
                       Dialog(
-                        backgroundColor: Colors.white,
+                        backgroundColor: theme.colorScheme.surface,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
                         ),
@@ -226,20 +245,20 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                                 ),
                               ),
                               const SizedBox(height: 24),
-                              const Text(
+                              Text(
                                 'Memproses...',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                                  color: theme.textTheme.bodyLarge?.color,
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
+                              Text(
                                 'Mohon tunggu sebentar',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: AppColors.textSecondary,
+                                  color: theme.textTheme.bodySmall?.color,
                                 ),
                               ),
                             ],
@@ -276,11 +295,13 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   }
 
   Widget _buildPaymentOption(
+    BuildContext context,
     String title,
     String subtitle,
     IconData icon,
     Color iconColor,
   ) {
+    final theme = Theme.of(context);
     bool isSelected = selectedMethod == title;
     return GestureDetector(
       onTap: () => setState(() => selectedMethod = title),
@@ -290,10 +311,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary.withAlpha((0.05 * 255).round())
-              : Colors.white,
+              : theme.cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey.shade200,
+            color: isSelected ? AppColors.primary : theme.dividerColor,
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -319,15 +340,15 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                           ? FontWeight.bold
                           : FontWeight.w600,
                       fontSize: 15,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: theme.textTheme.bodySmall?.color,
                     ),
                   ),
                 ],
@@ -339,7 +360,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                  color: isSelected ? AppColors.primary : theme.dividerColor,
                   width: 2,
                 ),
                 color: isSelected ? AppColors.primary : Colors.transparent,

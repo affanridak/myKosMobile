@@ -7,19 +7,21 @@ class HelpCenterScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
         title: Text(
           'Pusat Bantuan',
-          style: const TextStyle(
-            color: AppColors.textPrimary,
+          style: TextStyle(
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -30,24 +32,29 @@ class HelpCenterScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            color: Colors.white,
+            color: theme.scaffoldBackgroundColor,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(
+                  color: theme.dividerColor.withAlpha((0.35 * 255).round()),
+                ),
               ),
               child: TextField(
-                style: const TextStyle(),
+                style: TextStyle(color: theme.textTheme.bodyMedium?.color),
                 decoration: InputDecoration(
                   hintText: 'Cari topik bantuan...',
-                  hintStyle: const TextStyle(
-                    color: AppColors.textSecondary,
+                  hintStyle: TextStyle(
+                    color: theme.textTheme.bodySmall?.color,
                     fontSize: 14,
                   ),
                   border: InputBorder.none,
-                  icon: Icon(Icons.search, color: AppColors.textSecondary),
+                  icon: Icon(
+                    Icons.search,
+                    color: theme.textTheme.bodySmall?.color,
+                  ),
                 ),
               ),
             ),
@@ -58,26 +65,30 @@ class HelpCenterScreen extends StatelessWidget {
               children: [
                 Text(
                   'Pertanyaan Populer (FAQ)',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: theme.textTheme.titleMedium?.color,
                   ),
                 ),
                 const SizedBox(height: 16),
                 _buildFaqItem(
+                  context,
                   'Bagaimana cara menyewa kos?',
                   'Anda dapat mencari kos yang diinginkan, masuk ke halaman detail, lalu klik tombol "Hubungi Pemilik" atau "Sewa Sekarang" untuk melanjutkan ke proses pembayaran.',
                 ),
                 _buildFaqItem(
+                  context,
                   'Apakah bisa membatalkan pesanan?',
                   'Pembatalan pesanan dapat dilakukan maksimal 1x24 jam setelah pembayaran berhasil, sesuai dengan kebijakan masing-masing pemilik kos.',
                 ),
                 _buildFaqItem(
+                  context,
                   'Metode pembayaran apa saja yang tersedia?',
                   'Kami menerima pembayaran melalui Transfer Bank (Virtual Account) dan beberapa layanan E-Wallet seperti GoPay, OVO, dan Dana.',
                 ),
                 _buildFaqItem(
+                  context,
                   'Bagaimana jika pemilik kos tidak membalas chat?',
                   'Jika pemilik kos tidak merespons dalam 1x24 jam, Anda dapat menekan tombol "Laporkan Kendala" atau menghubungi layanan Customer Service kami.',
                 ),
@@ -88,13 +99,13 @@ class HelpCenterScreen extends StatelessWidget {
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: theme.cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black12,
+              color: theme.shadowColor.withAlpha((0.14 * 255).round()),
               blurRadius: 10,
-              offset: Offset(0, -5),
+              offset: const Offset(0, -5),
             ),
           ],
         ),
@@ -116,7 +127,7 @@ class HelpCenterScreen extends StatelessWidget {
               icon: const Icon(Icons.support_agent, color: AppColors.primary),
               label: Text(
                 'Hubungi Customer Service',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.primary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -130,13 +141,17 @@ class HelpCenterScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFaqItem(String question, String answer) {
+  Widget _buildFaqItem(BuildContext context, String question, String answer) {
+    final theme = Theme.of(context);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: theme.dividerColor.withAlpha((0.35 * 255).round()),
+        ),
       ),
       child: ExpansionTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -145,20 +160,20 @@ class HelpCenterScreen extends StatelessWidget {
         ),
         title: Text(
           question,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyMedium?.color,
           ),
         ),
         iconColor: AppColors.primary,
-        collapsedIconColor: Colors.grey,
+        collapsedIconColor: theme.textTheme.bodySmall?.color,
         childrenPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
         children: [
           Text(
             answer,
             style: TextStyle(
-              color: Colors.grey.shade700,
+              color: theme.textTheme.bodySmall?.color,
               fontSize: 13,
               height: 1.5,
             ),

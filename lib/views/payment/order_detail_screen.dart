@@ -8,19 +8,24 @@ class OrderDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back,
+            color: theme.iconTheme.color ?? theme.textTheme.bodyLarge?.color,
+          ),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
+        title: Text(
           'Detail Pesanan',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -49,19 +54,19 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Pembayaran Berhasil',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     '27 April 2026, 14:30 WIB',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: theme.textTheme.bodySmall?.color,
                       fontSize: 13,
                     ),
                   ),
@@ -79,9 +84,9 @@ class OrderDetailScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: theme.dividerColor),
               ),
               child: Row(
                 children: [
@@ -107,10 +112,10 @@ class OrderDetailScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
+                        Text(
                           'Setiabudi, Jakarta Selatan',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: theme.textTheme.bodySmall?.color,
                             fontSize: 12,
                           ),
                         ),
@@ -140,21 +145,30 @@ class OrderDetailScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: theme.dividerColor),
               ),
               child: Column(
                 children: [
-                  _buildReceiptRow('Metode Pembayaran', 'BCA Virtual Account'),
+                  _buildReceiptRow(
+                    context,
+                    'Metode Pembayaran',
+                    'BCA Virtual Account',
+                  ),
                   const SizedBox(height: 12),
-                  _buildReceiptRow('ID Transaksi', 'TRX-9876543210'),
-                  const Divider(height: 24),
-                  _buildReceiptRow('Harga Sewa (1 Bulan)', 'Rp1.800.000'),
-                  const SizedBox(height: 8),
-                  _buildReceiptRow('Biaya Admin', 'Rp5.000'),
+                  _buildReceiptRow(context, 'ID Transaksi', 'TRX-9876543210'),
                   const Divider(height: 24),
                   _buildReceiptRow(
+                    context,
+                    'Harga Sewa (1 Bulan)',
+                    'Rp1.800.000',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildReceiptRow(context, 'Biaya Admin', 'Rp5.000'),
+                  const Divider(height: 24),
+                  _buildReceiptRow(
+                    context,
                     'Total Pembayaran',
                     'Rp1.805.000',
                     isTotal: true,
@@ -167,13 +181,13 @@ class OrderDetailScreen extends StatelessWidget {
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: theme.cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black12,
+              color: theme.shadowColor.withAlpha((0.12 * 255).round()),
               blurRadius: 10,
-              offset: Offset(0, -5),
+              offset: const Offset(0, -5),
             ),
           ],
         ),
@@ -248,14 +262,23 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildReceiptRow(String title, String value, {bool isTotal = false}) {
+  Widget _buildReceiptRow(
+    BuildContext context,
+    String title,
+    String value, {
+    bool isTotal = false,
+  }) {
+    final theme = Theme.of(context);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           title,
           style: TextStyle(
-            color: isTotal ? AppColors.textPrimary : AppColors.textSecondary,
+            color: isTotal
+                ? theme.textTheme.bodyLarge?.color
+                : theme.textTheme.bodySmall?.color,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
             fontSize: isTotal ? 16 : 14,
           ),
@@ -263,7 +286,7 @@ class OrderDetailScreen extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
             fontSize: isTotal ? 16 : 14,
           ),

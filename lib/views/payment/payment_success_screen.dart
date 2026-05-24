@@ -9,8 +9,10 @@ class PaymentSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -31,19 +33,22 @@ class PaymentSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
-              const Text(
+              Text(
                 'Pembayaran Berhasil!',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Terima kasih! Pembayaran Anda telah kami terima. Pemilik kost akan segera menyiapkan kamar Anda.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+                style: TextStyle(
+                  color: theme.textTheme.bodySmall?.color,
+                  height: 1.5,
+                ),
               ),
               const Spacer(),
               SizedBox(

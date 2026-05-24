@@ -40,11 +40,12 @@ class _CartScreenState extends State<CartScreen> {
   Future<void> _removeWishlist(int propertyId) async {
     await _kostService.toggleWishlist(propertyId);
     _fetchWishlists();
+    if (!mounted) return;
     Get.snackbar(
       'Dihapus',
       'Kost dihapus dari keranjang',
-      backgroundColor: Colors.orange,
-      colorText: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.secondary,
+      colorText: Theme.of(context).colorScheme.onSecondary,
       snackPosition: SnackPosition.BOTTOM,
     );
   }
@@ -68,23 +69,24 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final selectedKost = _selectedIndex != null
         ? _toKost(_wishlists[_selectedIndex!])
         : null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
-        title: const Text(
+        title: Text(
           'Keranjang Saya',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -92,7 +94,7 @@ class _CartScreenState extends State<CartScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
+            icon: Icon(Icons.refresh, color: theme.iconTheme.color),
             onPressed: _fetchWishlists,
           ),
         ],
@@ -104,16 +106,16 @@ class _CartScreenState extends State<CartScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.shopping_cart_outlined,
                     size: 80,
-                    color: Colors.grey,
+                    color: theme.dividerColor,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Keranjang kamu masih kosong',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: theme.textTheme.bodySmall?.color,
                       fontSize: 16,
                     ),
                   ),
@@ -126,9 +128,11 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                     ),
                     onPressed: () => Get.back(),
-                    child: const Text(
+                    child: Text(
                       'Cari Kost Sekarang',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
                     ),
                   ),
                 ],
@@ -189,12 +193,14 @@ class _CartScreenState extends State<CartScreen> {
                             margin: const EdgeInsets.only(bottom: 16),
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: theme.cardColor,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isSelected
                                     ? AppColors.primary
-                                    : Colors.grey.shade200,
+                                    : theme.dividerColor.withAlpha(
+                                        (0.4 * 255).round(),
+                                      ),
                                 width: isSelected ? 2 : 1,
                               ),
                               boxShadow: isSelected
@@ -235,14 +241,16 @@ class _CartScreenState extends State<CartScreen> {
                                       border: Border.all(
                                         color: isSelected
                                             ? AppColors.primary
-                                            : Colors.grey.shade400,
+                                            : theme.dividerColor,
                                         width: 2,
                                       ),
                                     ),
                                     child: isSelected
-                                        ? const Icon(
+                                        ? Icon(
                                             Icons.check,
-                                            color: Colors.white,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimary,
                                             size: 14,
                                           )
                                         : null,
@@ -256,11 +264,14 @@ class _CartScreenState extends State<CartScreen> {
                                           width: 80,
                                           height: 80,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
+                                          errorBuilder: (context, error, _) =>
                                               Container(
                                                 width: 80,
                                                 height: 80,
-                                                color: Colors.grey.shade200,
+                                                color: theme.dividerColor
+                                                    .withAlpha(
+                                                      (0.2 * 255).round(),
+                                                    ),
                                                 child: const Icon(
                                                   Icons.image_not_supported,
                                                 ),
@@ -269,7 +280,9 @@ class _CartScreenState extends State<CartScreen> {
                                       : Container(
                                           width: 80,
                                           height: 80,
-                                          color: Colors.grey.shade200,
+                                          color: theme.dividerColor.withAlpha(
+                                            (0.2 * 255).round(),
+                                          ),
                                           child: const Icon(
                                             Icons.image_not_supported,
                                           ),
@@ -298,9 +311,9 @@ class _CartScreenState extends State<CartScreen> {
                                           GestureDetector(
                                             onTap: () =>
                                                 _removeWishlist(kost.id),
-                                            child: const Icon(
+                                            child: Icon(
                                               Icons.delete_outline,
-                                              color: Colors.red,
+                                              color: theme.colorScheme.error,
                                               size: 20,
                                             ),
                                           ),
@@ -309,17 +322,23 @@ class _CartScreenState extends State<CartScreen> {
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.location_on,
                                             size: 12,
-                                            color: AppColors.textSecondary,
+                                            color: theme
+                                                .textTheme
+                                                .bodySmall
+                                                ?.color,
                                           ),
                                           const SizedBox(width: 4),
                                           Expanded(
                                             child: Text(
                                               kost.location,
-                                              style: const TextStyle(
-                                                color: AppColors.textSecondary,
+                                              style: TextStyle(
+                                                color: theme
+                                                    .textTheme
+                                                    .bodySmall
+                                                    ?.color,
                                                 fontSize: 12,
                                               ),
                                               maxLines: 1,
@@ -374,9 +393,13 @@ class _CartScreenState extends State<CartScreen> {
                                               const SizedBox(width: 4),
                                               Text(
                                                 '${kost.rating}',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.bold,
+                                                  color: theme
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.color,
                                                 ),
                                               ),
                                             ],
@@ -400,13 +423,13 @@ class _CartScreenState extends State<CartScreen> {
           ? const SizedBox.shrink()
           : Container(
               padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: theme.cardColor,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12,
+                    color: theme.shadowColor.withAlpha((0.16 * 255).round()),
                     blurRadius: 10,
-                    offset: Offset(0, -5),
+                    offset: const Offset(0, -5),
                   ),
                 ],
               ),
@@ -418,10 +441,10 @@ class _CartScreenState extends State<CartScreen> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Total Harga',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: theme.textTheme.bodySmall?.color,
                             fontSize: 12,
                           ),
                         ),
@@ -434,7 +457,7 @@ class _CartScreenState extends State<CartScreen> {
                             fontSize: 18,
                             color: selectedKost != null
                                 ? AppColors.primary
-                                : AppColors.textSecondary,
+                                : theme.textTheme.bodySmall?.color,
                           ),
                         ),
                       ],
@@ -443,7 +466,9 @@ class _CartScreenState extends State<CartScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: selectedKost != null
                             ? AppColors.primary
-                            : Colors.grey.shade300,
+                            : theme.dividerColor.withAlpha(
+                                (0.85 * 255).round(),
+                              ),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 14,
@@ -459,14 +484,18 @@ class _CartScreenState extends State<CartScreen> {
                                 () => CheckoutScreen(kost: selectedKost),
                               );
                               if (checkoutSuccess == true) {
-                                await _kostService.toggleWishlist(selectedKost.id);
+                                await _kostService.toggleWishlist(
+                                  selectedKost.id,
+                                );
                                 _fetchWishlists();
                               }
                             },
-                      child: const Text(
+                      child: Text(
                         'Checkout',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: selectedKost != null
+                              ? Theme.of(context).colorScheme.onPrimary
+                              : theme.textTheme.bodySmall?.color,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),

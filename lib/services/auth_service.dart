@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,7 +16,28 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  final String _baseUrl = 'http://127.0.0.1:8000/api';
+  // Default base URL for local development.
+  static const String _defaultBaseUrl = 'http://127.0.0.1:8000/api';
+  // Optional runtime override:
+  // flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8000/api
+  static const String _envBaseUrl =
+      String.fromEnvironment('API_BASE_URL', defaultValue: _defaultBaseUrl);
+
+  String get _baseUrl {
+    final configured = _envBaseUrl.trim().isEmpty ? _defaultBaseUrl : _envBaseUrl;
+    try {
+      final parsed = Uri.tryParse(configured);
+      if (!kIsWeb && Platform.isAndroid && parsed != null) {
+        // Android emulator: map host localhost -> 10.0.2.2.
+        if (parsed.host == '127.0.0.1' || parsed.host == 'localhost') {
+          return parsed.replace(host: '10.0.2.2').toString();
+        }
+      }
+    } catch (_) {
+      // If Platform check fails (e.g. web), fall back to default
+    }
+    return configured;
+  }
   final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -346,6 +367,7 @@ class AuthService {
           data['user']['email'],
           data['user']['role'] ?? 'tenant',
           phone: data['user']['phone'],
+          avatar: data['user']['avatar']?.toString(),
         );
         return AuthResult(
           success: true,
@@ -529,7 +551,7 @@ class AuthService {
         await prefs.setString('phone', data['phone'] ?? '');
         final email = data['email'] ?? prefs.getString('email') ?? '';
         final key = email.isNotEmpty
-            ? 'avatar:${(email as String).toLowerCase()}'
+            ? 'avatar:${email.toLowerCase()}'
             : 'avatar';
         await prefs.setString(
           key,

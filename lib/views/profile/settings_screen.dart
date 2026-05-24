@@ -14,22 +14,21 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: Theme.of(context).iconTheme.color,
-          ),
+          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
         title: Text(
           'Pengaturan',
           style: TextStyle(
-            color: Theme.of(context).textTheme.bodyLarge?.color,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -142,31 +141,36 @@ class SettingsScreen extends StatelessWidget {
     bool value,
     ValueChanged<bool> onChanged,
   ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: SwitchListTile(
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-            color: AppColors.textPrimary,
-          ),
+    final theme = Theme.of(context);
+
+    return Material(
+      color: theme.cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Ink(
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
         ),
-        value: value,
-        onChanged: onChanged,
-        activeThumbColor: AppColors.primary,
-        secondary: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withAlpha((0.1 * 255).round()),
-            borderRadius: BorderRadius.circular(10),
+        child: SwitchListTile(
+          title: Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: theme.textTheme.bodyMedium?.color,
+            ),
           ),
-          child: Icon(icon, color: AppColors.primary),
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: AppColors.primary,
+          secondary: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha((0.1 * 255).round()),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.primary),
+          ),
         ),
       ),
     );
@@ -179,54 +183,59 @@ class SettingsScreen extends StatelessWidget {
     VoidCallback onTap, {
     String? trailingText,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withAlpha((0.1 * 255).round()),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: AppColors.primary),
+    final theme = Theme.of(context);
+
+    return Material(
+      color: theme.cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Ink(
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-            color: AppColors.textPrimary,
+        child: ListTile(
+          onTap: onTap,
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha((0.1 * 255).round()),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.primary),
           ),
-        ),
-        trailing: trailingText != null
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    trailingText,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
+          title: Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              color: theme.textTheme.bodyMedium?.color,
+            ),
+          ),
+          trailing: trailingText != null
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      trailingText,
+                      style: TextStyle(
+                        color: theme.textTheme.bodySmall?.color,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Icons.arrow_forward_ios,
-                    size: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                ],
-              )
-            : const Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: AppColors.textSecondary,
-              ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 14,
+                      color: theme.textTheme.bodySmall?.color,
+                    ),
+                  ],
+                )
+              : Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14,
+                  color: theme.textTheme.bodySmall?.color,
+                ),
+        ),
       ),
     );
   }

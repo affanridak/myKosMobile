@@ -24,31 +24,34 @@ class ProfileChangePasswordController extends GetxController {
     final confirmPwd = confirmPasswordController.text.trim();
 
     if (oldPwd.isEmpty || newPwd.isEmpty || confirmPwd.isEmpty) {
+      final theme = Theme.of(Get.context!);
       Get.snackbar(
         'Error',
         'Semua field harus diisi',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: theme.colorScheme.error,
+        colorText: theme.colorScheme.onError,
       );
       return;
     }
 
     if (newPwd.length < 6) {
+      final theme = Theme.of(Get.context!);
       Get.snackbar(
         'Error',
         'Password baru minimal 6 karakter',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: theme.colorScheme.error,
+        colorText: theme.colorScheme.onError,
       );
       return;
     }
 
     if (newPwd != confirmPwd) {
+      final theme = Theme.of(Get.context!);
       Get.snackbar(
         'Error',
         'Konfirmasi password tidak cocok',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: theme.colorScheme.error,
+        colorText: theme.colorScheme.onError,
       );
       return;
     }
@@ -65,26 +68,29 @@ class ProfileChangePasswordController extends GetxController {
         newPasswordController.clear();
         confirmPasswordController.clear();
         Get.back();
+        final theme = Theme.of(Get.context!);
         Get.snackbar(
           'Sukses',
           res.message,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
+          backgroundColor: theme.colorScheme.secondary,
+          colorText: theme.colorScheme.onSecondary,
         );
       } else {
+        final theme = Theme.of(Get.context!);
         Get.snackbar(
           'Error',
           res.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
+          backgroundColor: theme.colorScheme.error,
+          colorText: theme.colorScheme.onError,
         );
       }
     } catch (e) {
+      final theme = Theme.of(Get.context!);
       Get.snackbar(
         'Error',
         'Terjadi kesalahan jaringan',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+        backgroundColor: theme.colorScheme.error,
+        colorText: theme.colorScheme.onError,
       );
     } finally {
       isLoading.value = false;

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../theme/app_colors.dart';
 import '../../widgets/custom_inputs.dart';
 import '../../controllers/auth_controller.dart';
 
@@ -21,8 +20,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
@@ -34,18 +34,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Get.back(),
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.textPrimary,
-                    ),
+                    icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     'Ubah Password',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
                 ],
@@ -62,17 +59,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               const SizedBox(height: 20),
               Text(
                 'Ubah Password',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                  color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Hampir selesai! Silakan buat password baru Anda yang unik dan mudah diingat untuk mengamankan akun.',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: theme.textTheme.bodySmall?.color,
                   height: 1.5,
                 ),
               ),
@@ -80,9 +77,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: theme.dividerColor),
                 ),
                 child: TextField(
                   controller: authC.newPassword,
@@ -91,19 +88,19 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   decoration: InputDecoration(
                     hintText: 'Password Baru',
                     hintStyle: TextStyle(
-                      color: AppColors.textSecondary.withAlpha(
+                      color: theme.textTheme.bodySmall?.color?.withAlpha(
                         (0.5 * 255).round(),
                       ),
                       fontSize: 14,
                     ),
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.lock_outline,
-                      color: AppColors.textSecondary,
+                      color: theme.iconTheme.color,
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _showPassword ? Icons.visibility : Icons.visibility_off,
-                        color: AppColors.textSecondary,
+                        color: theme.iconTheme.color,
                       ),
                       onPressed: () =>
                           setState(() => _showPassword = !_showPassword),
@@ -119,9 +116,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: theme.dividerColor),
                 ),
                 child: TextField(
                   controller: authC.confirmNewPassword,
@@ -130,21 +127,21 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   decoration: InputDecoration(
                     hintText: 'Konfirmasi Password Baru',
                     hintStyle: TextStyle(
-                      color: AppColors.textSecondary.withAlpha(
+                      color: theme.textTheme.bodySmall?.color?.withAlpha(
                         (0.5 * 255).round(),
                       ),
                       fontSize: 14,
                     ),
-                    prefixIcon: const Icon(
+                    prefixIcon: Icon(
                       Icons.lock_reset_outlined,
-                      color: AppColors.textSecondary,
+                      color: theme.iconTheme.color,
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _showConfirmPassword
                             ? Icons.visibility
                             : Icons.visibility_off,
-                        color: AppColors.textSecondary,
+                        color: theme.iconTheme.color,
                       ),
                       onPressed: () => setState(
                         () => _showConfirmPassword = !_showConfirmPassword,

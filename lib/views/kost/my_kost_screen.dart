@@ -61,15 +61,17 @@ class _MyKostScreenState extends State<MyKostScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Kost Saya',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: theme.textTheme.bodyLarge?.color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -77,7 +79,10 @@ class _MyKostScreenState extends State<MyKostScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
+            icon: Icon(
+              Icons.refresh,
+              color: theme.iconTheme.color ?? theme.textTheme.bodyLarge?.color,
+            ),
             onPressed: _fetchContracts,
           ),
         ],
@@ -97,15 +102,21 @@ class _MyKostScreenState extends State<MyKostScreen> {
                     selected: isSelected,
                     selectedColor: AppColors.primary,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : theme.textTheme.bodyLarge?.color,
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
-                    backgroundColor: Colors.white,
+                    backgroundColor: theme.cardColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(
-                        color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                        color: isSelected
+                            ? AppColors.primary
+                            : theme.dividerColor,
                       ),
                     ),
                     onSelected: (selected) {
@@ -120,183 +131,227 @@ class _MyKostScreenState extends State<MyKostScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _filtered.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/no_kost_illustration.png',
-                                width: 260,
-                              ),
-                              const SizedBox(height: 24),
-                              const Text(
-                                'Kamu belum punya kos, temukan kos mu sekarang',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              SizedBox(
-                                width: 200,
-                                height: 48,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  onPressed: () => Get.to(() => SearchScreen()),
-                                  child: const Text(
-                                    'Cari Kos Sekarang',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/no_kost_illustration.png',
+                            width: 260,
                           ),
-                        ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _fetchContracts,
-                        color: AppColors.primary,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          itemCount: _filtered.length,
-                          itemBuilder: (context, index) {
-                            final contract = _filtered[index];
-                            final kost = _contractToKost(contract);
-                            final statusText = contract['status'] as String;
-                            final statusColor = statusText == 'Aktif' ? Colors.green : Colors.grey;
-                            final int contractId = contract['id'] ?? 0;
-                            final bool hasReviewed = contract['has_review'] ?? false;
-
-                            return GestureDetector(
-                              onTap: () => Get.to(() => DetailScreen(kost: kost)),
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 16),
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withAlpha((0.02 * 255).round()),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
+                          const SizedBox(height: 24),
+                          Text(
+                            'Kamu belum punya kos, temukan kos mu sekarang',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: theme.textTheme.bodySmall?.color,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: 200,
+                            height: 48,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Row(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: kost.imageUrl.startsWith('http')
-                                          ? Image.network(
-                                              kost.imageUrl,
-                                              width: 100,
-                                              height: 100,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) => Container(
+                              ),
+                              onPressed: () => Get.to(() => SearchScreen()),
+                              child: Text(
+                                'Cari Kos Sekarang',
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _fetchContracts,
+                    color: AppColors.primary,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: _filtered.length,
+                      itemBuilder: (context, index) {
+                        final contract = _filtered[index];
+                        final kost = _contractToKost(contract);
+                        final statusText = contract['status'] as String;
+                        final statusColor = statusText == 'Aktif'
+                            ? Theme.of(context).colorScheme.secondary
+                            : (theme.textTheme.bodySmall?.color ?? Colors.grey);
+                        final int contractId = contract['id'] ?? 0;
+                        final bool hasReviewed =
+                            contract['has_review'] ?? false;
+
+                        return GestureDetector(
+                          onTap: () => Get.to(() => DetailScreen(kost: kost)),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: theme.cardColor,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.shadowColor.withAlpha(
+                                    (0.02 * 255).round(),
+                                  ),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: kost.imageUrl.startsWith('http')
+                                      ? Image.network(
+                                          kost.imageUrl,
+                                          width: 100,
+                                          height: 100,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, _) =>
+                                              Container(
                                                 width: 100,
                                                 height: 100,
-                                                color: Colors.grey.shade200,
-                                                child: const Icon(Icons.image_not_supported),
+                                                color: theme.dividerColor
+                                                    .withAlpha(
+                                                      (0.2 * 255).round(),
+                                                    ),
+                                                child: const Icon(
+                                                  Icons.image_not_supported,
+                                                ),
                                               ),
-                                            )
-                                          : Image.asset(
-                                              'assets/images/banner2.png',
-                                              width: 100,
-                                              height: 100,
-                                              fit: BoxFit.cover,
-                                            ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        )
+                                      : Image.asset(
+                                          'assets/images/banner2.png',
+                                          width: 100,
+                                          height: 100,
+                                          fit: BoxFit.cover,
+                                        ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color: statusColor.withAlpha((0.1 * 255).round()),
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                child: Text(
-                                                  statusText,
-                                                  style: TextStyle(
-                                                    color: statusColor,
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.bold,
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: statusColor.withAlpha(
+                                                (0.1 * 255).round(),
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              statusText,
+                                              style: TextStyle(
+                                                color: statusColor,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: Icon(
+                                              hasReviewed
+                                                  ? Icons.star
+                                                  : Icons.star_border,
+                                              size: 22,
+                                              color: AppColors.warning,
+                                            ),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            onPressed: hasReviewed
+                                                ? null
+                                                : () => _showUlasanDialog(
+                                                    contractId,
                                                   ),
-                                                ),
-                                              ),
-                                              IconButton(
-                                                icon: Icon(
-                                                  hasReviewed ? Icons.star : Icons.star_border,
-                                                  size: 22,
-                                                  color: AppColors.warning,
-                                                ),
-                                                padding: EdgeInsets.zero,
-                                                constraints: const BoxConstraints(),
-                                                onPressed: hasReviewed 
-                                                    ? null 
-                                                    : () => _showUlasanDialog(contractId),
-                                              ),
-                                            ],
                                           ),
-                                          const SizedBox(height: 6),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        kost.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        contract['room_type'] ?? '',
+                                        style: const TextStyle(
+                                          color: AppColors.primary,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_today,
+                                            size: 11,
+                                            color: theme
+                                                .textTheme
+                                                .bodySmall
+                                                ?.color,
+                                          ),
+                                          const SizedBox(width: 4),
                                           Text(
-                                            kost.name,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            contract['room_type'] ?? '',
-                                            style: const TextStyle(color: AppColors.primary, fontSize: 11),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              const Icon(Icons.calendar_today, size: 11, color: AppColors.textSecondary),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                '${contract['start_date']} - ${contract['end_date']}',
-                                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Rp${kost.price}/bulan',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.primary,
-                                              fontSize: 14,
+                                            '${contract['start_date']} - ${contract['end_date']}',
+                                            style: TextStyle(
+                                              color: theme
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.color,
+                                              fontSize: 11,
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Rp${kost.price}/bulan',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primary,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -309,26 +364,36 @@ class _MyKostScreenState extends State<MyKostScreen> {
 
     Get.dialog(
       Dialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Get.theme.colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: StatefulBuilder(
           builder: (context, setStateDialog) {
+            final theme = Theme.of(context);
             return Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Beri Ulasan',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Beri Ulasan',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(5, (index) {
                       return IconButton(
-                        onPressed: () => setStateDialog(() => currentRating = index + 1),
+                        onPressed: () =>
+                            setStateDialog(() => currentRating = index + 1),
                         icon: Icon(
-                          index < currentRating ? Icons.star : Icons.star_border,
+                          index < currentRating
+                              ? Icons.star
+                              : Icons.star_border,
                           color: AppColors.warning,
                           size: 36,
                         ),
@@ -341,8 +406,13 @@ class _MyKostScreenState extends State<MyKostScreen> {
                     maxLines: 3,
                     decoration: InputDecoration(
                       hintText: 'Bagikan pengalaman Anda...',
-                      hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      hintStyle: TextStyle(
+                        fontSize: 14,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: AppColors.primary),
@@ -355,11 +425,19 @@ class _MyKostScreenState extends State<MyKostScreen> {
                       Expanded(
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            side: const BorderSide(color: Colors.grey),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            side: BorderSide(color: theme.dividerColor),
                           ),
                           onPressed: () => Get.back(),
-                          child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            'Batal',
+                            style: TextStyle(
+                              color: theme.textTheme.bodySmall?.color,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -367,17 +445,23 @@ class _MyKostScreenState extends State<MyKostScreen> {
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                           onPressed: () async {
                             if (currentRating == 0) {
-                              Get.snackbar('Peringatan', 'Silakan pilih rating terlebih dahulu',
-                                  backgroundColor: Colors.orange, colorText: Colors.white);
+                              Get.snackbar(
+                                'Peringatan',
+                                'Silakan pilih rating terlebih dahulu',
+                                backgroundColor: theme.colorScheme.secondary,
+                                colorText: theme.colorScheme.onSecondary,
+                              );
                               return;
                             }
 
                             Get.back();
-                            
+
                             final result = await _kostService.submitReview(
                               contractId: contractId,
                               rating: currentRating,
@@ -385,15 +469,29 @@ class _MyKostScreenState extends State<MyKostScreen> {
                             );
 
                             if (result['success'] == true) {
-                              Get.snackbar('Sukses', 'Terima kasih atas ulasan Anda!',
-                                  backgroundColor: Colors.green, colorText: Colors.white);
+                              Get.snackbar(
+                                'Sukses',
+                                'Terima kasih atas ulasan Anda!',
+                                backgroundColor: theme.colorScheme.secondary,
+                                colorText: theme.colorScheme.onSecondary,
+                              );
                               _fetchContracts();
                             } else {
-                              Get.snackbar('Gagal', result['message'] ?? 'Gagal mengirim ulasan',
-                                  backgroundColor: Colors.red, colorText: Colors.white);
+                              Get.snackbar(
+                                'Gagal',
+                                result['message'] ?? 'Gagal mengirim ulasan',
+                                backgroundColor: theme.colorScheme.error,
+                                colorText: theme.colorScheme.onError,
+                              );
                             }
                           },
-                          child: const Text('Kirim', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          child: Text(
+                            'Kirim',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ],
