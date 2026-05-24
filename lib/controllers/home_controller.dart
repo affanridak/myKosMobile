@@ -85,8 +85,7 @@ class HomeController extends GetxController {
       filteredKosts.value = List.from(allKosts);
 
       filteredKosts.sort((a, b) => a.price.compareTo(b.price));
-    }
-    else {
+    } else {
       filteredKosts.value = allKosts.where((kost) {
         return kost.type.toLowerCase() == filter.toLowerCase();
       }).toList();

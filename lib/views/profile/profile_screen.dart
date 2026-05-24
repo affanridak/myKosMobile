@@ -251,10 +251,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       onPressed: () => Get.back(),
                                       child: Text(
                                         'Batal',
-                                        style: theme.textTheme.labelLarge?.copyWith(
-                                          color: theme.textTheme.bodySmall?.color,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: theme.textTheme.labelLarge
+                                            ?.copyWith(
+                                              color: theme
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.color,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
                                     ),
                                   ),
@@ -280,10 +284,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       },
                                       child: Text(
                                         'Keluar',
-                                        style: theme.textTheme.labelLarge?.copyWith(
-                                          color: theme.colorScheme.onError,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: theme.textTheme.labelLarge
+                                            ?.copyWith(
+                                              color: theme.colorScheme.onError,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
                                     ),
                                   ),
@@ -370,10 +375,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      trailingText,
-                      style: theme.textTheme.bodySmall,
-                    ),
+                    Text(trailingText, style: theme.textTheme.bodySmall),
                     const SizedBox(width: 8),
                     Icon(
                       Icons.arrow_forward_ios,

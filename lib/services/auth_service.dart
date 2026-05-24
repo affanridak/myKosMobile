@@ -20,11 +20,15 @@ class AuthService {
   static const String _defaultBaseUrl = 'http://127.0.0.1:8000/api';
   // Optional runtime override:
   // flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8000/api
-  static const String _envBaseUrl =
-      String.fromEnvironment('API_BASE_URL', defaultValue: _defaultBaseUrl);
+  static const String _envBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: _defaultBaseUrl,
+  );
 
   String get _baseUrl {
-    final configured = _envBaseUrl.trim().isEmpty ? _defaultBaseUrl : _envBaseUrl;
+    final configured = _envBaseUrl.trim().isEmpty
+        ? _defaultBaseUrl
+        : _envBaseUrl;
     try {
       final parsed = Uri.tryParse(configured);
       if (!kIsWeb && Platform.isAndroid && parsed != null) {
@@ -38,6 +42,7 @@ class AuthService {
     }
     return configured;
   }
+
   final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

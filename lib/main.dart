@@ -86,21 +86,17 @@ class MyApp extends StatelessWidget {
       ),
 
       inputDecorationTheme: InputDecorationTheme(
-        hintStyle: GoogleFonts.poppins(color: lightColorScheme.onSurface.withAlpha(120)),
+        hintStyle: GoogleFonts.poppins(
+          color: lightColorScheme.onSurface.withAlpha(120),
+        ),
         labelStyle: GoogleFonts.poppins(color: lightColorScheme.onSurface),
       ),
 
-      chipTheme: ChipThemeData(
-        labelStyle: GoogleFonts.poppins(),
-      ),
+      chipTheme: ChipThemeData(labelStyle: GoogleFonts.poppins()),
 
-      popupMenuTheme: PopupMenuThemeData(
-        textStyle: GoogleFonts.poppins(),
-      ),
+      popupMenuTheme: PopupMenuThemeData(textStyle: GoogleFonts.poppins()),
 
-      snackBarTheme: SnackBarThemeData(
-        contentTextStyle: GoogleFonts.poppins(),
-      ),
+      snackBarTheme: SnackBarThemeData(contentTextStyle: GoogleFonts.poppins()),
     );
 
     // ── Dark ───────────────────────────────────────────────────────────────
@@ -130,9 +126,7 @@ class MyApp extends StatelessWidget {
           fontWeight: FontWeight.bold,
           color: darkColorScheme.onSurface,
         ),
-        toolbarTextStyle: GoogleFonts.poppins(
-          color: darkColorScheme.onSurface,
-        ),
+        toolbarTextStyle: GoogleFonts.poppins(color: darkColorScheme.onSurface),
       ),
 
       dialogTheme: DialogThemeData(
@@ -142,9 +136,7 @@ class MyApp extends StatelessWidget {
           fontWeight: FontWeight.bold,
           color: darkColorScheme.onSurface,
         ),
-        contentTextStyle: GoogleFonts.poppins(
-          color: darkColorScheme.onSurface,
-        ),
+        contentTextStyle: GoogleFonts.poppins(color: darkColorScheme.onSurface),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -166,21 +158,17 @@ class MyApp extends StatelessWidget {
       ),
 
       inputDecorationTheme: InputDecorationTheme(
-        hintStyle: GoogleFonts.poppins(color: darkColorScheme.onSurface.withAlpha(120)),
+        hintStyle: GoogleFonts.poppins(
+          color: darkColorScheme.onSurface.withAlpha(120),
+        ),
         labelStyle: GoogleFonts.poppins(color: darkColorScheme.onSurface),
       ),
 
-      chipTheme: ChipThemeData(
-        labelStyle: GoogleFonts.poppins(),
-      ),
+      chipTheme: ChipThemeData(labelStyle: GoogleFonts.poppins()),
 
-      popupMenuTheme: PopupMenuThemeData(
-        textStyle: GoogleFonts.poppins(),
-      ),
+      popupMenuTheme: PopupMenuThemeData(textStyle: GoogleFonts.poppins()),
 
-      snackBarTheme: SnackBarThemeData(
-        contentTextStyle: GoogleFonts.poppins(),
-      ),
+      snackBarTheme: SnackBarThemeData(contentTextStyle: GoogleFonts.poppins()),
     );
 
     return Obx(
