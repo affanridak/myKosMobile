@@ -22,8 +22,7 @@ class AuthService {
   // IP PC di jaringan lokal (hasil ipconfig → IPv4).
   // Laragon pakai port 80, path sesuai folder project Laravel.
   static const String _localIp = '192.168.1.15';
-  static const String _defaultBaseUrl =
-      'http://$_localIp/myKosWeb/public/api';
+  static const String _defaultBaseUrl = 'http://$_localIp/myKosWeb/public/api';
 
   // Override saat runtime jika diperlukan:
   //   flutter run --dart-define=API_BASE_URL=http://192.168.x.x/myKosWeb/public/api
@@ -33,8 +32,9 @@ class AuthService {
   );
 
   String get _baseUrl {
-    final configured =
-        _envBaseUrl.trim().isEmpty ? _defaultBaseUrl : _envBaseUrl;
+    final configured = _envBaseUrl.trim().isEmpty
+        ? _defaultBaseUrl
+        : _envBaseUrl;
     try {
       final parsed = Uri.tryParse(configured);
       if (!kIsWeb && Platform.isAndroid && parsed != null) {

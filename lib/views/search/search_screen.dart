@@ -114,7 +114,9 @@ class SearchScreen extends StatelessWidget {
                         ),
                         backgroundColor: theme.cardColor,
                         side: BorderSide(
-                          color: isSelected ? AppColors.primary : theme.dividerColor.withAlpha(50),
+                          color: isSelected
+                              ? AppColors.primary
+                              : theme.dividerColor.withAlpha(50),
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
@@ -212,7 +214,9 @@ class SearchScreen extends StatelessWidget {
                     ),
                     backgroundColor: theme.cardColor,
                     side: BorderSide(
-                      color: isSelected ? AppColors.primary : theme.dividerColor.withAlpha(50),
+                      color: isSelected
+                          ? AppColors.primary
+                          : theme.dividerColor.withAlpha(50),
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),

@@ -8,8 +8,7 @@ class ApiConfig {
   ApiConfig._(); // tidak bisa diinstansiasi
 
   static const String localIp = '192.168.1.15';
-  static const String _defaultBaseUrl =
-      'http://$localIp/myKosWeb/public/api';
+  static const String _defaultBaseUrl = 'http://$localIp/myKosWeb/public/api';
 
   // Override via: flutter run --dart-define=API_BASE_URL=http://x.x.x.x/myKosWeb/public/api
   static const String _envBaseUrl = String.fromEnvironment(
@@ -19,8 +18,9 @@ class ApiConfig {
 
   /// Base URL yang sudah disesuaikan dengan platform (emulator / HP fisik).
   static String get baseUrl {
-    final configured =
-        _envBaseUrl.trim().isEmpty ? _defaultBaseUrl : _envBaseUrl;
+    final configured = _envBaseUrl.trim().isEmpty
+        ? _defaultBaseUrl
+        : _envBaseUrl;
     try {
       final parsed = Uri.tryParse(configured);
       if (!kIsWeb && Platform.isAndroid && parsed != null) {
