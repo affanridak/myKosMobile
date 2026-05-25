@@ -271,14 +271,8 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
       final response = await http.get(
-        Uri.parse(
-          'https://chess-gore-patience.ngrok-free.dev/api/auth/google/mobile?platform=mobile',
-        ),
-        headers: {
-          'ngrok-skip-browser-warning': 'true',
-          'Accept': 'application/json',
-          'User-Agent': 'FlutterApp',
-        },
+        Uri.parse('${_authService.baseUrl}/auth/google/mobile?platform=mobile'),
+        headers: {'Accept': 'application/json', 'User-Agent': 'FlutterApp'},
       );
       isLoading.value = false;
 

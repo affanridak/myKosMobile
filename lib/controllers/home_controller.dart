@@ -24,6 +24,8 @@ class HomeController extends GetxController {
     {'icon': Icons.people_outline, 'label': 'Campuran'},
   ];
 
+  final ScrollController kostScrollController = ScrollController();
+
   @override
   void onInit() {
     super.onInit();
@@ -94,5 +96,11 @@ class HomeController extends GetxController {
 
   Future<void> refreshData() async {
     await fetchProperties();
+  }
+
+  @override
+  void onClose() {
+    kostScrollController.dispose();
+    super.onClose();
   }
 }

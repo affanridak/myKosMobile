@@ -16,10 +16,16 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  // Default base URL for local development.
-  static const String _defaultBaseUrl = 'http://127.0.0.1:8000/api';
-  // Optional runtime override:
-  // flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8000/api
+  // ---------------------------------------------------------------
+  // Base URL Configuration — Laragon Local Server
+  // ---------------------------------------------------------------
+  // IP PC di jaringan lokal (hasil ipconfig → IPv4).
+  // Laragon pakai port 80, path sesuai folder project Laravel.
+  static const String _localIp = '192.168.1.15';
+  static const String _defaultBaseUrl = 'http://$_localIp/myKosWeb/public/api';
+
+  // Override saat runtime jika diperlukan:
+  //   flutter run --dart-define=API_BASE_URL=http://192.168.x.x/myKosWeb/public/api
   static const String _envBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: _defaultBaseUrl,
@@ -32,21 +38,26 @@ class AuthService {
     try {
       final parsed = Uri.tryParse(configured);
       if (!kIsWeb && Platform.isAndroid && parsed != null) {
-        // Android emulator: map host localhost -> 10.0.2.2.
+        // Emulator Android: localhost / 127.0.0.1 → 10.0.2.2
+        // HP fisik pakai IP langsung (_localIp), jadi cabang ini
+        // tidak aktif selama _defaultBaseUrl menggunakan IP nyata.
         if (parsed.host == '127.0.0.1' || parsed.host == 'localhost') {
           return parsed.replace(host: '10.0.2.2').toString();
         }
       }
     } catch (_) {
-      // If Platform check fails (e.g. web), fall back to default
+      // Jika Platform check gagal (mis. web), gunakan configured.
     }
     return configured;
   }
 
+  /// Getter publik agar service lain bisa menggunakan base URL yang sama.
+  /// Cukup ubah [_localIp] atau [_defaultBaseUrl] di atas, semua service ikut.
+  String get baseUrl => _baseUrl;
+
   final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'ngrok-skip-browser-warning': 'true',
   };
 
   String get _origin {
@@ -180,7 +191,6 @@ class AuthService {
           }
           request.headers.addAll({
             'Accept': 'application/json',
-            'ngrok-skip-browser-warning': 'true',
             'Authorization': 'Bearer $token',
           });
 
@@ -237,7 +247,6 @@ class AuthService {
                   Uri.parse('$_baseUrl/user'),
                   headers: {
                     'Accept': 'application/json',
-                    'ngrok-skip-browser-warning': 'true',
                     'Authorization': 'Bearer $token',
                   },
                 );
