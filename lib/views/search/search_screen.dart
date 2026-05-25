@@ -19,13 +19,7 @@ class SearchScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: theme.iconTheme.color ?? theme.textTheme.bodyLarge?.color,
-          ),
-          onPressed: () => Get.back(),
-        ),
+        automaticallyImplyLeading: false,
         title: Text(
           'Filter Pencarian',
           style: TextStyle(
@@ -60,6 +54,17 @@ class SearchScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: theme.cardColor,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: theme.dividerColor.withAlpha(50),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.shadowColor.withAlpha(20),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: TextField(
                 controller: searchC.locationController,
@@ -108,7 +113,9 @@ class SearchScreen extends StatelessWidget {
                               : FontWeight.normal,
                         ),
                         backgroundColor: theme.cardColor,
-                        side: BorderSide.none,
+                        side: BorderSide(
+                          color: isSelected ? AppColors.primary : theme.dividerColor.withAlpha(50),
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -204,7 +211,9 @@ class SearchScreen extends StatelessWidget {
                           : FontWeight.normal,
                     ),
                     backgroundColor: theme.cardColor,
-                    side: BorderSide.none,
+                    side: BorderSide(
+                      color: isSelected ? AppColors.primary : theme.dividerColor.withAlpha(50),
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),

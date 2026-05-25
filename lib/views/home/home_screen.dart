@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../theme/app_colors.dart';
 import '../../models/kost_model.dart';
 import '../../controllers/home_controller.dart';
+import '../../controllers/search_controller.dart';
 
 import '../detail/detail_screen.dart';
 import '../notifications/notification_screen.dart';
@@ -79,15 +80,23 @@ class HomeScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                     boxShadow: [
                       BoxShadow(
-                        color: theme.shadowColor.withAlpha(10),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: theme.shadowColor.withAlpha(30),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
                   child: TextField(
-                    readOnly: true,
-                    onTap: () => Get.to(() => SearchScreen()),
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (value) {
+                      if (value.trim().isNotEmpty) {
+                        final searchC = Get.put(SearchKostController());
+                        searchC.locationController.text = value;
+                        searchC.applyFilters();
+                      } else {
+                        Get.to(() => SearchScreen());
+                      }
+                    },
                     decoration: InputDecoration(
                       hintText: 'Cari lokasi, nama kost, atau fasilitas',
                       hintStyle: TextStyle(
@@ -96,16 +105,19 @@ class HomeScreen extends StatelessWidget {
                       ),
                       border: InputBorder.none,
                       icon: Icon(Icons.search, color: theme.iconTheme.color),
-                      suffixIcon: Container(
-                        margin: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.tune,
-                          color: theme.colorScheme.onPrimary,
-                          size: 18,
+                      suffixIcon: GestureDetector(
+                        onTap: () => Get.to(() => SearchScreen()),
+                        child: Container(
+                          margin: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.tune,
+                            color: theme.colorScheme.onPrimary,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ),
@@ -152,15 +164,39 @@ class HomeScreen extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    TextButton(
-                      onPressed: () => Get.to(() => SearchScreen()),
-                      child: Text(
-                        'Lihat Semua >',
-                        style: TextStyle(
-                          color: theme.textTheme.bodySmall?.color,
-                          fontSize: 12,
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            if (homeC.kostScrollController.hasClients) {
+                              homeC.kostScrollController.animateTo(
+                                homeC.kostScrollController.offset - 276,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.arrow_back_ios, size: 18),
+                          color: AppColors.primary,
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
                         ),
-                      ),
+                        IconButton(
+                          onPressed: () {
+                            if (homeC.kostScrollController.hasClients) {
+                              homeC.kostScrollController.animateTo(
+                                homeC.kostScrollController.offset + 276,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.arrow_forward_ios, size: 18),
+                          color: AppColors.primary,
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -187,16 +223,19 @@ class HomeScreen extends StatelessWidget {
                     );
                   }
 
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: homeC.filteredKosts.length,
-                    itemBuilder: (context, index) {
-                      return _buildKostCard(
-                        context,
-                        homeC.filteredKosts[index],
-                      );
-                    },
+                  return SizedBox(
+                    height: 370,
+                    child: ListView.builder(
+                      controller: homeC.kostScrollController,
+                      scrollDirection: Axis.horizontal,
+                      itemCount: homeC.filteredKosts.length,
+                      itemBuilder: (context, index) {
+                        return _buildKostCard(
+                          context,
+                          homeC.filteredKosts[index],
+                        );
+                      },
+                    ),
                   );
                 }),
               ],
@@ -258,10 +297,19 @@ class HomeScreen extends StatelessWidget {
     return GestureDetector(
       onTap: () => Get.to(() => DetailScreen(kost: kost)),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 18),
+        width: 260,
+        margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: theme.dividerColor.withAlpha(50), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: theme.shadowColor.withAlpha(10),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,11 +457,14 @@ class HomeScreen extends StatelessWidget {
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
 
                   const SizedBox(height: 8),
 
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Icon(
                         Icons.location_on,
@@ -428,6 +479,8 @@ class HomeScreen extends StatelessWidget {
                             fontSize: 13,
                             color: theme.textTheme.bodySmall?.color,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
