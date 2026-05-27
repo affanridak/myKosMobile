@@ -4,10 +4,31 @@ import '../../theme/app_colors.dart';
 import 'chat_detail_screen.dart';
 import '../../controllers/chat_controller.dart';
 
-class ChatScreen extends StatelessWidget {
-  final ChatController chatC = Get.put(ChatController());
+class ChatScreen extends StatefulWidget {
+  const ChatScreen({super.key});
 
-  ChatScreen({super.key});
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final ChatController chatC = Get.put(ChatController());
+  final TextEditingController searchController = TextEditingController();
+  String searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      chatC.fetchConversations();
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +60,12 @@ class ChatScreen extends StatelessWidget {
                 border: Border.all(color: theme.dividerColor),
               ),
               child: TextField(
-                onChanged: chatC.updateSearchQuery,
-                style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                controller: searchController,
+                onChanged: (value) {
+                  setState(() => searchQuery = value.toLowerCase());
+                },
+                // ✅ DIAMBIL DARI UPSTREAM: dihapus `const` karena hintStyle pakai variabel `theme`
+                // — stashed punya `const InputDecoration` tapi isinya runtime value, itu compile error
                 decoration: InputDecoration(
                   hintText: 'Cari obrolan...',
                   hintStyle: TextStyle(
@@ -56,9 +81,18 @@ class ChatScreen extends StatelessWidget {
           ),
           Expanded(
             child: Obx(() {
-              final filteredChatList = chatC.filteredChatList;
+              if (chatC.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-              if (filteredChatList.isEmpty) {
+              final filtered = chatC.conversations.where((chat) {
+                final name = (chat['other_user']?['name'] ?? '')
+                    .toString()
+                    .toLowerCase();
+                return name.contains(searchQuery);
+              }).toList();
+
+              if (filtered.isEmpty) {
                 return const Center(
                   child: Text(
                     'Tidak ada obrolan ditemukan.',
@@ -69,11 +103,17 @@ class ChatScreen extends StatelessWidget {
 
               return ListView.builder(
                 padding: const EdgeInsets.only(bottom: 12),
-                itemCount: filteredChatList.length,
+                itemCount: filtered.length,
                 itemBuilder: (context, index) {
-                  final chat = filteredChatList[index];
+                  final chat = filtered[index];
+                  final originalIndex = chatC.conversations.indexOf(chat);
+
+                  String chatName = chat['other_user']?['name'] ?? 'Pengguna';
+                  String lastMessage =
+                      chat['last_message'] ?? 'Belum ada pesan';
+
                   return Dismissible(
-                    key: Key(chat.name),
+                    key: Key(chat['id'].toString()),
                     direction: DismissDirection.endToStart,
                     background: Builder(
                       builder: (context) {
@@ -91,7 +131,7 @@ class ChatScreen extends StatelessWidget {
                       },
                     ),
                     confirmDismiss: (direction) async {
-                      return await Get.dialog<bool>(
+                      final confirmed = await Get.dialog<bool>(
                         Dialog(
                           backgroundColor: theme.colorScheme.surface,
                           shape: RoundedRectangleBorder(
@@ -105,6 +145,8 @@ class ChatScreen extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
+                                    // ✅ DIAMBIL DARI UPSTREAM: pakai theme.colorScheme.error
+                                    // lebih proper untuk dark mode vs hardcode Colors.red
                                     color: theme.colorScheme.error.withAlpha(
                                       (0.1 * 255).round(),
                                     ),
@@ -141,9 +183,8 @@ class ChatScreen extends StatelessWidget {
                                       child: OutlinedButton(
                                         style: OutlinedButton.styleFrom(
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           side: BorderSide(
                                             color: theme.dividerColor,
@@ -155,9 +196,7 @@ class ChatScreen extends StatelessWidget {
                                           'Batal',
                                           style: TextStyle(
                                             color: theme
-                                                .textTheme
-                                                .bodySmall
-                                                ?.color,
+                                                .textTheme.bodySmall?.color,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -170,13 +209,13 @@ class ChatScreen extends StatelessWidget {
                                           backgroundColor:
                                               theme.colorScheme.error,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           elevation: 0,
                                         ),
-                                        onPressed: () => Get.back(result: true),
+                                        onPressed: () =>
+                                            Get.back(result: true),
                                         child: Text(
                                           'Hapus',
                                           style: TextStyle(
@@ -193,21 +232,47 @@ class ChatScreen extends StatelessWidget {
                           ),
                         ),
                       );
+
+                      if (confirmed != true) return false;
+
+                      final success = await chatC
+                          .deleteConversation(chat['id']);
+
+                      if (success) {
+                        chatC.conversations.removeAt(originalIndex);
+                        Get.snackbar(
+                          'Berhasil',
+                          'Obrolan telah dihapus',
+                          backgroundColor: Colors.green,
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          margin: const EdgeInsets.all(16),
+                        );
+                        return true;
+                      } else {
+                        Get.snackbar(
+                          'Gagal',
+                          'Gagal menghapus obrolan',
+                          backgroundColor: Colors.red,
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          margin: const EdgeInsets.all(16),
+                        );
+                        return false;
+                      }
                     },
-                    onDismissed: (direction) {
-                      chatC.deleteChat(chat.name);
-                      final theme = Theme.of(context);
-                      Get.snackbar(
-                        'Berhasil',
-                        'Obrolan dengan ${chat.name} telah dihapus',
-                        backgroundColor: theme.colorScheme.secondary,
-                        colorText: theme.colorScheme.onSecondary,
-                        snackPosition: SnackPosition.BOTTOM,
-                        margin: const EdgeInsets.all(16),
-                      );
-                    },
+                    // ✅ DIAMBIL DARI STASHED: upstream punya chatC.deleteChat(chat.name)
+                    // yang akan crash karena chat adalah Map, bukan object dengan .name
+                    onDismissed: (_) {},
                     child: InkWell(
-                      onTap: () => Get.to(() => const ChatDetailScreen()),
+                      onTap: () => Get.to(
+                        () => const ChatDetailScreen(),
+                        arguments: {
+                          'conversation_id': chat['id'],
+                          'user_one_id': chat['user_one_id'],
+                          'other_user': chat['other_user'],
+                        },
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
@@ -217,88 +282,40 @@ class ChatScreen extends StatelessWidget {
                           children: [
                             CircleAvatar(
                               radius: 28,
-                              backgroundImage: NetworkImage(chat.avatar),
+                              backgroundColor: AppColors.primary
+                                  .withAlpha((0.2 * 255).round()),
+                              child: Text(
+                                chatName.isNotEmpty
+                                    ? chatName[0].toUpperCase()
+                                    : '?',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          chat.name,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      Text(
-                                        chat.time,
-                                        style: TextStyle(
-                                          color: chat.unread > 0
-                                              ? AppColors.primary
-                                              : theme
-                                                    .textTheme
-                                                    .bodySmall
-                                                    ?.color,
-                                          fontSize: 12,
-                                          fontWeight: chat.unread > 0
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    chatName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 6),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          chat.lastMessage,
-                                          style: TextStyle(
-                                            color: chat.unread > 0
-                                                ? theme
-                                                      .textTheme
-                                                      .bodyLarge
-                                                      ?.color
-                                                : theme
-                                                      .textTheme
-                                                      .bodySmall
-                                                      ?.color,
-                                            fontWeight: chat.unread > 0
-                                                ? FontWeight.w600
-                                                : FontWeight.normal,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      if (chat.unread > 0)
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: const BoxDecoration(
-                                            color: AppColors.primary,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Text(
-                                            chat.unread.toString(),
-                                            style: TextStyle(
-                                              color:
-                                                  theme.colorScheme.onPrimary,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
+                                  Text(
+                                    lastMessage,
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),

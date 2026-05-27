@@ -2,15 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/kost_model.dart';
-import '../config/api_config.dart';
 
 class KostService {
   static final KostService _instance = KostService._internal();
   factory KostService() => _instance;
   KostService._internal();
 
-  // URL dikelola terpusat di ApiConfig (lib/config/api_config.dart).
-  String get _baseUrl => ApiConfig.baseUrl;
+ final String _baseUrl = 'https://chess-gore-patience.ngrok-free.dev/api';
   final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -195,6 +193,88 @@ class KostService {
       };
     } catch (e) {
       return {'success': false, 'message': 'Terjadi kesalahan jaringan'};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getConversations() async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse('$_baseUrl/conversations'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(data['data']);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getMessages(int conversationId) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse('$_baseUrl/conversations/$conversationId/messages'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(data['data']);
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>?> createOrGetConversation(int ownerId) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.post(
+        Uri.parse('$_baseUrl/conversations/create'),
+        headers: headers,
+        body: jsonEncode({'owner_id': ownerId}),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['data'];
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> sendMessage(int conversationId, String message) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.post(
+        Uri.parse('$_baseUrl/messages'),
+        headers: headers,
+        body: jsonEncode({
+          'conversation_id': conversationId,
+          'message': message,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteConversation(int conversationId) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/conversations/$conversationId'),
+        headers: headers,
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
     }
   }
 }

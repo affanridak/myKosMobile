@@ -1,9 +1,70 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_colors.dart';
+import '../../controllers/chat_controller.dart';
 
-class ChatDetailScreen extends StatelessWidget {
+class ChatDetailScreen extends StatefulWidget {
   const ChatDetailScreen({super.key});
+
+  @override
+  State<ChatDetailScreen> createState() => _ChatDetailScreenState();
+}
+
+class _ChatDetailScreenState extends State<ChatDetailScreen> {
+  final ChatController chatC = Get.find<ChatController>();
+  final TextEditingController messageController = TextEditingController();
+  final ScrollController scrollController = ScrollController();
+  Timer? _pollingTimer;
+
+  late int conversationId;
+  late int userOneId;
+  Map<String, dynamic> otherUser = {'name': 'Pengguna', 'id': 0, 'role': ''};
+
+  @override
+  void initState() {
+    super.initState();
+    final args = Get.arguments;
+
+    conversationId = args is Map ? (args['conversation_id'] ?? 1) : (args ?? 1);
+    userOneId = args is Map ? (args['user_one_id'] ?? 0) : 0;
+    otherUser = args is Map
+        ? (args['other_user'] ?? {'name': 'Pengguna', 'id': 0, 'role': ''})
+        : {'name': 'Pengguna', 'id': 0, 'role': ''};
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await chatC.fetchMessages(conversationId);
+      _scrollToBottom();
+    });
+
+    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      final prevCount = chatC.currentMessages.length;
+      await chatC.fetchMessages(conversationId);
+      if (chatC.currentMessages.length != prevCount) {
+        _scrollToBottom();
+      }
+    });
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (scrollController.hasClients) {
+        scrollController.animateTo(
+          scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    messageController.dispose();
+    scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +85,16 @@ class ChatDetailScreen extends StatelessWidget {
         titleSpacing: 0,
         title: Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 16,
-              backgroundImage: NetworkImage(
-                'https://images.unsplash.com/photo-1522771731470-4202111d4408?auto=format&fit=crop&w=100&q=60',
+              backgroundColor:
+                  AppColors.primary.withAlpha((0.2 * 255).round()),
+              child: Text(
+                (otherUser['name'] as String).isNotEmpty
+                    ? (otherUser['name'] as String)[0].toUpperCase()
+                    : '?',
+                style: const TextStyle(
+                    color: AppColors.primary, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 12),
@@ -35,7 +102,7 @@ class ChatDetailScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Kost Nyaman Setiabudi',
+                  otherUser['name'] ?? 'Pengguna',
                   style: TextStyle(
                     color: theme.textTheme.bodyLarge?.color,
                     fontSize: 14,
@@ -43,7 +110,7 @@ class ChatDetailScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Online',
+                  otherUser['role'] == 'owner' ? 'Pemilik Kost' : 'Pengguna',
                   style: TextStyle(
                     color: theme.colorScheme.secondary,
                     fontSize: 11,
@@ -53,60 +120,47 @@ class ChatDetailScreen extends StatelessWidget {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.more_vert,
-              color: theme.iconTheme.color ?? theme.textTheme.bodyLarge?.color,
-            ),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                _buildChatBubble(
-                  context,
-                  'Halo, saya tertarik dengan kamar ini. Apakah masih tersedia?',
-                  true,
-                  '10:30',
-                ),
-                _buildChatBubble(
-                  context,
-                  'Halo! Masih tersedia ya 😊',
-                  false,
-                  '10:32',
-                ),
-                _buildChatBubble(
-                  context,
-                  'Apa saja fasilitas yang didapatkan kak?',
-                  true,
-                  '10:33',
-                ),
-                _buildChatBubble(
-                  context,
-                  'Fasilitas lengkap: Wi-Fi, AC, kamar mandi dalam, dapur, dan parkir ya.',
-                  false,
-                  '10:35',
-                ),
-                _buildChatBubble(
-                  context,
-                  'Baik, boleh saya jadwalkan untuk lihat langsung?',
-                  true,
-                  '10:36',
-                ),
-                _buildChatBubble(
-                  context,
-                  'Boleh, kapan ya? 😊',
-                  false,
-                  '10:37',
-                ),
-              ],
-            ),
+            child: Obx(() {
+              if (chatC.currentMessages.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'Belum ada pesan. Mulai obrolan sekarang!',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                controller: scrollController,
+                padding: const EdgeInsets.all(20),
+                itemCount: chatC.currentMessages.length,
+                itemBuilder: (context, index) {
+                  final msg = chatC.currentMessages[index];
+
+                  final senderId = msg['sender_id'];
+                  bool isMe = senderId == userOneId ||
+                      senderId.toString() == userOneId.toString();
+
+                  String text = msg['message'] ?? '';
+                  String timeStr = '';
+                  if (msg['created_at'] != null) {
+                    try {
+                      DateTime dt =
+                          DateTime.parse(msg['created_at']).toLocal();
+                      timeStr =
+                          "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+                    } catch (e) {
+                      timeStr = '';
+                    }
+                  }
+                  return _buildChatBubble(context, text, isMe, timeStr);
+                },
+              );
+            }),
           ),
           _buildMessageInput(context),
         ],
@@ -182,6 +236,7 @@ class ChatDetailScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardColor,
         boxShadow: [
+          // ✅ DARI UPSTREAM: theme-aware shadow, lebih proper dari Colors.black12
           BoxShadow(
             color: theme.shadowColor.withAlpha((0.12 * 255).round()),
             blurRadius: 10,
@@ -192,10 +247,9 @@ class ChatDetailScreen extends StatelessWidget {
       child: SafeArea(
         child: Row(
           children: [
-            Icon(Icons.attach_file, color: theme.iconTheme.color),
-            const SizedBox(width: 12),
             Expanded(
               child: TextField(
+                controller: messageController,
                 decoration: InputDecoration(
                   hintText: 'Ketik pesan...',
                   hintStyle: TextStyle(
@@ -224,7 +278,14 @@ class ChatDetailScreen extends StatelessWidget {
                   color: theme.colorScheme.onPrimary,
                   size: 18,
                 ),
-                onPressed: () {},
+                onPressed: () async {
+                  final text = messageController.text.trim();
+                  if (text.isNotEmpty) {
+                    messageController.clear();
+                    await chatC.sendMessage(conversationId, text);
+                    _scrollToBottom();
+                  }
+                },
               ),
             ),
           ],

@@ -1,48 +1,62 @@
 import 'package:get/get.dart';
-import '../models/chat_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/kost_service.dart';
 
 class ChatController extends GetxController {
-  var searchQuery = ''.obs;
+  final KostService _kostService = KostService();
 
-  var chatList = <ChatModel>[
-    ChatModel(
-      name: 'Kost Nyaman Setiabudi',
-      lastMessage: 'Boleh, kapan ya? 😊',
-      time: '10:37',
-      unread: 2,
-      avatar:
-          'https://images.unsplash.com/photo-1522771731470-4202111d4408?auto=format&fit=crop&w=100&q=60',
-    ),
-    ChatModel(
-      name: 'Kost Putri Mandiri',
-      lastMessage: 'Terima kasih, saya tunggu kabarnya.',
-      time: 'Kemarin',
-      unread: 0,
-      avatar:
-          'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=100&q=60',
-    ),
-    ChatModel(
-      name: 'Green Kost Kemang',
-      lastMessage: 'Sama-sama kak, ditunggu kedatangannya.',
-      time: '20/04',
-      unread: 0,
-      avatar:
-          'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=100&q=60',
-    ),
-  ].obs;
+  final conversations = <Map<String, dynamic>>[].obs;
+  final currentMessages = <Map<String, dynamic>>[].obs;
+  final isLoading = false.obs;
+  int currentUserId = 0;
 
-  List<ChatModel> get filteredChatList {
-    if (searchQuery.value.isEmpty) return chatList;
-    return chatList
-        .where(
-          (chat) =>
-              chat.name.toLowerCase().contains(searchQuery.value.toLowerCase()),
-        )
-        .toList();
+  @override
+  void onInit() {
+    super.onInit();
+    _loadUserId();
+    fetchConversations();
   }
 
-  void updateSearchQuery(String query) => searchQuery.value = query;
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    if (token != null) {
+      // Ambil dari shared prefs kalau sudah disimpan
+      // Atau bisa fetch dari /api/user
+    }
+  }
 
-  void deleteChat(String name) =>
-      chatList.removeWhere((item) => item.name == name);
+  Future<void> fetchConversations() async {
+    isLoading.value = true;
+    final data = await _kostService.getConversations();
+    conversations.value = data;
+    isLoading.value = false;
+  }
+
+  Future<void> fetchMessages(int conversationId) async {
+    isLoading.value = true;
+    final data = await _kostService.getMessages(conversationId);
+    currentMessages.value = data;
+    isLoading.value = false;
+  }
+
+  Future<Map<String, dynamic>?> createOrGetConversation(int ownerId) async {
+    return await _kostService.createOrGetConversation(ownerId);
+  }
+
+  Future<void> sendMessage(int conversationId, String message) async {
+    final success = await _kostService.sendMessage(conversationId, message);
+    if (success) {
+      await fetchMessages(conversationId);
+    }
+  }
+
+  Future<bool> deleteConversation(int conversationId) async {
+    try {
+      final success = await _kostService.deleteConversation(conversationId);
+      return success;
+    } catch (e) {
+      return false;
+    }
+  }
 }

@@ -16,60 +16,20 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  // ---------------------------------------------------------------
-  // Base URL Configuration — Laragon Local Server
-  // ---------------------------------------------------------------
-  // IP PC di jaringan lokal (hasil ipconfig → IPv4).
-  // Laragon pakai port 80, path sesuai folder project Laravel.
-  static const String _localIp = '192.168.1.15';
-  static const String _defaultBaseUrl = 'http://$_localIp/myKosWeb/public/api';
-
-  // Override saat runtime jika diperlukan:
-  //   flutter run --dart-define=API_BASE_URL=http://192.168.x.x/myKosWeb/public/api
-  static const String _envBaseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: _defaultBaseUrl,
-  );
-
-  String get _baseUrl {
-    final configured = _envBaseUrl.trim().isEmpty
-        ? _defaultBaseUrl
-        : _envBaseUrl;
-    try {
-      final parsed = Uri.tryParse(configured);
-      if (!kIsWeb && Platform.isAndroid && parsed != null) {
-        // Emulator Android: localhost / 127.0.0.1 → 10.0.2.2
-        // HP fisik pakai IP langsung (_localIp), jadi cabang ini
-        // tidak aktif selama _defaultBaseUrl menggunakan IP nyata.
-        if (parsed.host == '127.0.0.1' || parsed.host == 'localhost') {
-          return parsed.replace(host: '10.0.2.2').toString();
-        }
-      }
-    } catch (_) {
-      // Jika Platform check gagal (mis. web), gunakan configured.
-    }
-    return configured;
-  }
-
-  /// Getter publik agar service lain bisa menggunakan base URL yang sama.
-  /// Cukup ubah [_localIp] atau [_defaultBaseUrl] di atas, semua service ikut.
-  String get baseUrl => _baseUrl;
+  final String _baseUrl = 'https://chess-gore-patience.ngrok-free.dev/api';
 
   final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'ngrok-skip-browser-warning': 'true', // Melewati halaman warning ngrok
   };
+
+  /// Getter publik agar service lain bisa menggunakan base URL yang sama.
+  String get baseUrl => _baseUrl;
 
   String get _origin {
     final baseUri = Uri.parse(_baseUrl);
     return '${baseUri.scheme}://${baseUri.authority}';
-  }
-
-  bool _isLocalAvatarHost(String host) {
-    final normalized = host.toLowerCase();
-    return normalized == '127.0.0.1' ||
-        normalized == 'localhost' ||
-        normalized == '10.0.2.2';
   }
 
   String _normalizeAvatarUrl(String? avatar) {
@@ -79,11 +39,6 @@ class AuthService {
     }
 
     if (value.startsWith('http://') || value.startsWith('https://')) {
-      final parsed = Uri.tryParse(value);
-      if (parsed != null && _isLocalAvatarHost(parsed.host)) {
-        final query = parsed.query.isNotEmpty ? '?${parsed.query}' : '';
-        return '$_origin${parsed.path}$query';
-      }
       return value;
     }
 
@@ -100,6 +55,8 @@ class AuthService {
 
   String? _token;
   String? get token => _token;
+  int? _userId;
+  int? get userId => _userId;
 
   Future<void> saveUser(
     String token,
@@ -108,6 +65,7 @@ class AuthService {
     String role, {
     String? phone,
     String? avatar,
+    int? userId,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
@@ -115,6 +73,8 @@ class AuthService {
     await prefs.setString('email', email);
     await prefs.setString('role', role);
     await prefs.setString('phone', phone ?? '');
+    if (userId != null) await prefs.setInt('user_id', userId);
+
     final emailKey = email.toLowerCase();
     final avatarKey = 'avatar:$emailKey';
     await prefs.setString(avatarKey, _normalizeAvatarUrl(avatar));
@@ -382,6 +342,7 @@ class AuthService {
           data['user']['role'] ?? 'tenant',
           phone: data['user']['phone'],
           avatar: data['user']['avatar']?.toString(),
+          userId: data['user']['id'] is int ? data['user']['id'] : null,
         );
         return AuthResult(
           success: true,
@@ -563,6 +524,9 @@ class AuthService {
         await prefs.setString('email', data['email'] ?? '');
         await prefs.setString('role', data['role'] ?? 'tenant');
         await prefs.setString('phone', data['phone'] ?? '');
+        if (data['id'] != null) {
+          await prefs.setInt('user_id', data['id'] is int ? data['id'] : int.tryParse(data['id'].toString()) ?? 0);
+        }
         final email = data['email'] ?? prefs.getString('email') ?? '';
         final key = email.isNotEmpty
             ? 'avatar:${email.toLowerCase()}'
