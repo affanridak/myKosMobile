@@ -8,7 +8,7 @@ import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'transaction_history_screen.dart';
 import 'help_center_screen.dart';
-import '../favorite/favorite_screen.dart';
+import '../report/report_screen.dart';
 import 'settings_screen.dart';
 import '../../services/auth_service.dart';
 
@@ -140,10 +140,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             _buildMenuTile(
               context,
-              'Favorit',
-              Icons.favorite_border,
+              'Laporan Masalah',
+              Icons.report_problem_outlined,
               () => Get.to(
-                () => const FavoriteScreen(),
+                () => const ReportScreen(),
                 transition: Transition.fadeIn,
               ),
             ),

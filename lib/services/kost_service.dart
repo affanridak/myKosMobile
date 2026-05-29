@@ -8,7 +8,7 @@ class KostService {
   factory KostService() => _instance;
   KostService._internal();
 
- final String _baseUrl = 'https://chess-gore-patience.ngrok-free.dev/api';
+  final String _baseUrl = 'https://chess-gore-patience.ngrok-free.dev/api';
   final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -275,6 +275,99 @@ class KostService {
       return response.statusCode == 200;
     } catch (e) {
       return false;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getComplaints() async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse('$_baseUrl/complaints'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List list = data['data'] ?? data;
+        return list.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> createComplaint({
+    required int propertyId,
+    int? contractId,
+    required String title,
+    required String description,
+    String? imagePath,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$_baseUrl/complaints'),
+      );
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+      request.fields['property_id'] = propertyId.toString();
+      if (contractId != null) {
+        request.fields['contract_id'] = contractId.toString();
+      }
+      request.fields['title'] = title;
+      request.fields['description'] = description;
+      if (imagePath != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('image', imagePath),
+        );
+      }
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return {'success': true, 'data': data['data'] ?? data};
+      }
+      return {
+        'success': false,
+        'message': data['message'] ?? 'Gagal mengirim laporan',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan jaringan'};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRentalRequests() async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse('$_baseUrl/rental-requests'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>?> getRentalRequestDetail(int id) async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse('$_baseUrl/rental-requests/$id'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 }

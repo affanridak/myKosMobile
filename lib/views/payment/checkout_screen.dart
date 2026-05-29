@@ -6,15 +6,77 @@ import '../../models/kost_model.dart';
 import '../../services/kost_service.dart';
 import '../../controllers/checkout_controller.dart';
 
-class CheckoutScreen extends StatelessWidget {
+class CheckoutScreen extends StatefulWidget {
   final Kost kost;
-  final CheckoutController controller = Get.put(CheckoutController());
+  const CheckoutScreen({super.key, required this.kost});
 
-  CheckoutScreen({super.key, required this.kost}) {
+  @override
+  State<CheckoutScreen> createState() => _CheckoutScreenState();
+}
+
+class _CheckoutScreenState extends State<CheckoutScreen> {
+  final CheckoutController controller = Get.put(CheckoutController());
+  final KostService _kostService = KostService();
+
+  bool _isFetchingRoomType = true;
+  List<Map<String, dynamic>> _roomTypes = [];
+  String? _fetchError;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inisialisasi nilai awal
     controller.duration.value = 1;
     controller.selectedDate.value = DateTime.now();
-    controller.durationType.value = kost.rentalType;
-    controller.selectedRoomTypeId.value = kost.id;
+    controller.durationType.value = widget.kost.rentalType;
+    controller.selectedRoomTypeId.value = 0; // reset dulu, tunggu fetch
+    _fetchRoomTypes();
+  }
+
+  /// Fetch detail properti untuk mendapatkan room_types beserta ID aslinya
+  Future<void> _fetchRoomTypes() async {
+    setState(() {
+      _isFetchingRoomType = true;
+      _fetchError = null;
+    });
+
+    final data = await _kostService.getPropertyDetail(widget.kost.id);
+
+    if (!mounted) return;
+
+    if (data == null) {
+      setState(() {
+        _isFetchingRoomType = false;
+        _fetchError = 'Gagal memuat tipe kamar';
+      });
+      return;
+    }
+
+    final rawRoomTypes = data['room_types'] as List<dynamic>? ?? [];
+    final rooms = rawRoomTypes
+        .map((r) => Map<String, dynamic>.from(r as Map))
+        .toList();
+
+    if (rooms.isEmpty) {
+      setState(() {
+        _isFetchingRoomType = false;
+        _fetchError = 'Tidak ada tipe kamar tersedia';
+      });
+      return;
+    }
+
+    // Pilih room type pertama sebagai default (harga termurah sudah diurutkan di API)
+    final defaultRoom = rooms.first;
+    controller.selectedRoomTypeId.value = defaultRoom['id'] as int;
+
+    // Sesuaikan rental type dari room type yang dipilih
+    final rentalType = defaultRoom['rental_type'] as String? ?? widget.kost.rentalType;
+    controller.durationType.value = rentalType;
+
+    setState(() {
+      _roomTypes = rooms;
+      _isFetchingRoomType = false;
+    });
   }
 
   Future<void> _submitRentalRequest() async {
@@ -59,6 +121,16 @@ class CheckoutScreen extends StatelessWidget {
     }
   }
 
+  /// Hitung harga berdasarkan room type yang dipilih
+  int _getSelectedRoomPrice() {
+    if (_roomTypes.isEmpty) return widget.kost.price;
+    final selectedId = controller.selectedRoomTypeId.value;
+    final found = _roomTypes.firstWhereOrNull(
+      (r) => r['id'] == selectedId,
+    );
+    return (found?['price'] as int?) ?? widget.kost.price;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -85,471 +157,554 @@ class CheckoutScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+      body: _isFetchingRoomType
+          ? const Center(child: CircularProgressIndicator())
+          : _fetchError != null
+              ? _buildErrorState(theme)
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Informasi Kost',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildKostInfo(theme),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Detail Sewa',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDatePicker(theme),
+                      const SizedBox(height: 12),
+                      // Pilihan tipe kamar (jika lebih dari 1 room type)
+                      if (_roomTypes.length > 1) ...[
+                        _buildRoomTypePicker(theme),
+                        const SizedBox(height: 12),
+                      ],
+                      _buildRentalTypePicker(theme),
+                      const SizedBox(height: 12),
+                      _buildDurationPicker(theme),
+                      const SizedBox(height: 32),
+                      const Text(
+                        'Rincian Pembayaran',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildPaymentDetail(theme),
+                    ],
+                  ),
+                ),
+      bottomNavigationBar: _isFetchingRoomType || _fetchError != null
+          ? null
+          : _buildBottomBar(theme),
+    );
+  }
+
+  Widget _buildErrorState(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
+          const SizedBox(height: 16),
+          Text(_fetchError!, style: TextStyle(color: theme.colorScheme.error)),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _fetchRoomTypes,
+            child: const Text('Coba Lagi'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKostInfo(ThemeData theme) {
+    final kost = widget.kost;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: kost.imageUrl.startsWith('http')
+                ? Image.network(
+                    kost.imageUrl,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, _) => _imagePlaceholder(theme),
+                  )
+                : _imagePlaceholder(theme),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha((0.1 * 255).round()),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    kost.type,
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  kost.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 14, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        kost.location,
+                        style: TextStyle(
+                          color: theme.textTheme.bodySmall?.color,
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _imagePlaceholder(ThemeData theme) {
+    return Container(
+      width: 80,
+      height: 80,
+      color: theme.dividerColor.withAlpha((0.2 * 255).round()),
+      child: const Icon(Icons.home),
+    );
+  }
+
+  Widget _buildDatePicker(ThemeData theme) {
+    return Obx(
+      () => GestureDetector(
+        onTap: () => controller.pickDate(context),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: theme.dividerColor),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha((0.1 * 255).round()),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.calendar_month_outlined,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tanggal Masuk',
+                      style: TextStyle(
+                        color: theme.textTheme.bodySmall?.color,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      DateFormat('dd MMMM yyyy').format(controller.selectedDate.value),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+              const Text(
+                'Ubah',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Picker untuk memilih room type jika properti punya lebih dari 1 tipe kamar
+  Widget _buildRoomTypePicker(ThemeData theme) {
+    return Obx(() {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: theme.dividerColor),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Informasi Kost',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: theme.dividerColor),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: kost.imageUrl.startsWith('http')
-                        ? Image.network(
-                            kost.imageUrl,
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, _) => Container(
-                              width: 80,
-                              height: 80,
-                              color: theme.dividerColor.withAlpha(
-                                (0.2 * 255).round(),
-                              ),
-                              child: const Icon(Icons.home),
-                            ),
-                          )
-                        : Container(
-                            width: 80,
-                            height: 80,
-                            color: theme.dividerColor.withAlpha(
-                              (0.2 * 255).round(),
-                            ),
-                            child: const Icon(Icons.home),
-                          ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withAlpha(
-                              (0.1 * 255).round(),
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            kost.type,
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          kost.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              size: 14,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                kost.location,
-                                style: TextStyle(
-                                  color: theme.textTheme.bodySmall?.color,
-                                  fontSize: 12,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Detail Sewa',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            Obx(
-              () => GestureDetector(
-                onTap: () => controller.pickDate(context),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: theme.dividerColor),
+                    color: AppColors.primary.withAlpha((0.1 * 255).round()),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.bed_outlined, color: AppColors.primary, size: 20),
+                ),
+                const SizedBox(width: 16),
+                const Text(
+                  'Tipe Kamar',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ..._roomTypes.map((room) {
+              final roomId = room['id'] as int;
+              final isSelected = controller.selectedRoomTypeId.value == roomId;
+              final roomRentalType = room['rental_type'] as String? ?? 'monthly';
+              final roomPrice = room['price'] as int? ?? 0;
+              final roomName = room['name'] as String? ?? '-';
+
+              return GestureDetector(
+                onTap: () {
+                  controller.selectedRoomTypeId.value = roomId;
+                  // Sesuaikan rental type dengan kamar yang dipilih
+                  controller.durationType.value = roomRentalType;
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withAlpha((0.08 * 255).round())
+                        : theme.scaffoldBackgroundColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : theme.dividerColor,
+                      width: isSelected ? 2 : 1,
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withAlpha(
-                            (0.1 * 255).round(),
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.calendar_month_outlined,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
+                      Icon(
+                        isSelected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_unchecked,
+                        color: isSelected ? AppColors.primary : theme.dividerColor,
+                        size: 18,
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 10),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Tanggal Masuk',
-                              style: TextStyle(
-                                color: theme.textTheme.bodySmall?.color,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              DateFormat(
-                                'dd MMMM yyyy',
-                              ).format(controller.selectedDate.value),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          roomName,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected
+                                ? AppColors.primary
+                                : theme.textTheme.bodyLarge?.color,
+                          ),
                         ),
                       ),
-                      const Text(
-                        'Ubah',
+                      Text(
+                        'Rp$roomPrice/${roomRentalType == 'monthly' ? 'bln' : 'hari'}',
                         style: TextStyle(
-                          color: AppColors.primary,
                           fontWeight: FontWeight.bold,
+                          color: isSelected ? AppColors.primary : theme.textTheme.bodySmall?.color,
                           fontSize: 13,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Obx(() {
-              List<Map<String, String>> availableTypes = [];
-              if (kost.rentalType == 'daily') {
-                availableTypes = [
-                  {'value': 'daily', 'label': 'Harian'},
-                ];
-              } else if (kost.rentalType == 'monthly') {
-                availableTypes = [
-                  {'value': 'monthly', 'label': 'Bulanan'},
-                ];
-              } else {
-                availableTypes = [
-                  {'value': 'monthly', 'label': 'Bulanan'},
-                  {'value': 'daily', 'label': 'Harian'},
-                ];
-              }
+              );
+            }),
+          ],
+        ),
+      );
+    });
+  }
 
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: theme.dividerColor),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.secondary.withAlpha((0.1 * 255).round()),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.tune,
-                        color: Theme.of(context).colorScheme.secondary,
-                        size: 20,
-                      ),
+  Widget _buildRentalTypePicker(ThemeData theme) {
+    return Obx(() {
+      // Tentukan opsi berdasarkan rental_type room yang dipilih
+      final selectedRoom = _roomTypes.firstWhereOrNull(
+        (r) => r['id'] == controller.selectedRoomTypeId.value,
+      );
+      final roomRentalType = selectedRoom?['rental_type'] as String? ?? widget.kost.rentalType;
+
+      List<Map<String, String>> availableTypes;
+      if (roomRentalType == 'daily') {
+        availableTypes = [{'value': 'daily', 'label': 'Harian'}];
+      } else if (roomRentalType == 'monthly') {
+        availableTypes = [{'value': 'monthly', 'label': 'Bulanan'}];
+      } else {
+        availableTypes = [
+          {'value': 'monthly', 'label': 'Bulanan'},
+          {'value': 'daily', 'label': 'Harian'},
+        ];
+      }
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: theme.dividerColor),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondary.withAlpha((0.1 * 255).round()),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.tune, color: Theme.of(context).colorScheme.secondary, size: 20),
+            ),
+            const SizedBox(width: 16),
+            const Text(
+              'Tipe Sewa',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            const Spacer(),
+            ...availableTypes.map((type) {
+              final isSelected = controller.durationType.value == type['value'];
+              return GestureDetector(
+                onTap: () => controller.setDurationType(type['value']!),
+                child: Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : theme.cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : theme.dividerColor,
                     ),
-                    const SizedBox(width: 16),
-                    const Text(
-                      'Tipe Sewa',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
+                  ),
+                  child: Text(
+                    type['label']!,
+                    style: TextStyle(
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : theme.textTheme.bodySmall?.color,
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
-                    const Spacer(),
-                    ...availableTypes.map((type) {
-                      final isSelected =
-                          controller.durationType.value == type['value'];
-                      return GestureDetector(
-                        onTap: () => controller.setDurationType(type['value']!),
-                        child: Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.primary
-                                : theme.cardColor,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : theme.dividerColor,
-                            ),
-                          ),
-                          child: Text(
-                            type['label']!,
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Theme.of(context).colorScheme.onPrimary
-                                  : theme.textTheme.bodySmall?.color,
-                              fontSize: 12,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
+                  ),
                 ),
               );
             }),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: theme.dividerColor),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withAlpha(
-                            (0.1 * 255).round(),
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.access_time,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Text(
-                        'Lama Sewa',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.dividerColor),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.remove, size: 16),
-                          color: theme.iconTheme.color,
-                          onPressed: controller.decrement,
-                          padding: const EdgeInsets.all(8),
-                          constraints: const BoxConstraints(),
-                        ),
-                        Obx(
-                          () => Text(
-                            '${controller.duration.value} ${controller.durationType.value == 'monthly' ? 'Bln' : 'Hari'}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.add, size: 16),
-                          color: AppColors.primary,
-                          onPressed: controller.increment,
-                          padding: const EdgeInsets.all(8),
-                          constraints: const BoxConstraints(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            const Text(
-              'Rincian Pembayaran',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: theme.dividerColor),
-              ),
-              child: Obx(() {
-                final int total = kost.price * controller.duration.value;
-                final String label = controller.durationType.value == 'monthly'
-                    ? '${controller.duration.value} Bulan'
-                    : '${controller.duration.value} Hari';
-                return Column(
-                  children: [
-                    _buildReceiptRow(
-                      context,
-                      'Harga Sewa ($label)',
-                      'Rp$total',
-                    ),
-                    const SizedBox(height: 16),
-                    Container(height: 1, color: theme.dividerColor),
-                    const SizedBox(height: 16),
-                    _buildReceiptRow(
-                      context,
-                      'Total Pembayaran',
-                      'Rp$total',
-                      isTotal: true,
-                    ),
-                  ],
-                );
-              }),
-            ),
           ],
         ),
+      );
+    });
+  }
+
+  Widget _buildDurationPicker(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          boxShadow: [
-            BoxShadow(
-              color: theme.shadowColor.withAlpha((0.12 * 255).round()),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
             children: [
-              Obx(() {
-                final int finalTotal = kost.price * controller.duration.value;
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Total Tagihan',
-                      style: TextStyle(
-                        color: theme.textTheme.bodySmall?.color,
-                        fontSize: 12,
-                      ),
-                    ),
-                    Text(
-                      'Rp$finalTotal',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                );
-              }),
-              Obx(
-                () => ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: controller.isLoading.value
-                        ? Colors.grey
-                        : AppColors.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  onPressed: controller.isLoading.value
-                      ? null
-                      : _submitRentalRequest,
-                  child: controller.isLoading.value
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text(
-                          'Ajukan Sewa',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha((0.1 * 255).round()),
+                  shape: BoxShape.circle,
                 ),
+                child: const Icon(Icons.access_time, color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 16),
+              const Text(
+                'Lama Sewa',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
             ],
           ),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: theme.dividerColor),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove, size: 16),
+                  color: theme.iconTheme.color,
+                  onPressed: controller.decrement,
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(),
+                ),
+                Obx(
+                  () => Text(
+                    '${controller.duration.value} ${controller.durationType.value == 'monthly' ? 'Bln' : 'Hari'}',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add, size: 16),
+                  color: AppColors.primary,
+                  onPressed: controller.increment,
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentDetail(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Obx(() {
+        final int price = _getSelectedRoomPrice();
+        final int total = price * controller.duration.value;
+        final String label = controller.durationType.value == 'monthly'
+            ? '${controller.duration.value} Bulan'
+            : '${controller.duration.value} Hari';
+        return Column(
+          children: [
+            _buildReceiptRow(context, 'Harga Sewa ($label)', 'Rp$total'),
+            const SizedBox(height: 16),
+            Container(height: 1, color: theme.dividerColor),
+            const SizedBox(height: 16),
+            _buildReceiptRow(context, 'Total Pembayaran', 'Rp$total', isTotal: true),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _buildBottomBar(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withAlpha((0.12 * 255).round()),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Obx(() {
+              final int price = _getSelectedRoomPrice();
+              final int finalTotal = price * controller.duration.value;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total Tagihan',
+                    style: TextStyle(
+                      color: theme.textTheme.bodySmall?.color,
+                      fontSize: 12,
+                    ),
+                  ),
+                  Text(
+                    'Rp$finalTotal',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              );
+            }),
+            Obx(
+              () => ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      controller.isLoading.value ? Colors.grey : AppColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: controller.isLoading.value ? null : _submitRentalRequest,
+                child: controller.isLoading.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Ajukan Sewa',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -562,7 +717,6 @@ class CheckoutScreen extends StatelessWidget {
     bool isTotal = false,
   }) {
     final theme = Theme.of(context);
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [

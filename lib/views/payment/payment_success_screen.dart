@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_colors.dart';
 import '../main_layout.dart';
-import 'order_detail_screen.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
   const PaymentSuccessScreen({super.key});
@@ -83,7 +82,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    Get.to(() => const OrderDetailScreen());
+                    Get.to(() => const());
                   },
                   child: const Text(
                     'Lihat Detail Pesanan',

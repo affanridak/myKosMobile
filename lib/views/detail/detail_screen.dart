@@ -6,7 +6,9 @@ import '../../models/kost_model.dart';
 import '../../services/kost_service.dart';
 import '../payment/checkout_screen.dart';
 import '../chat/chat_detail_screen.dart';
+import '../report/report_detail_screen.dart';
 import '../../controllers/chat_controller.dart';
+
 class DetailScreen extends StatefulWidget {
   final Kost kost;
   const DetailScreen({super.key, required this.kost});
@@ -20,8 +22,10 @@ class _DetailScreenState extends State<DetailScreen> {
   Map<String, dynamic>? _detail;
   bool _isLoading = true;
   bool _isAddingWishlist = false;
-  // ✅ DITAMBAHKAN: diperlukan oleh SliverAppBar PageView di stashed, tapi tidak pernah dideklarasikan
   int _currentImageIndex = 0;
+  bool _hasActiveContract = false;
+  int? _activePropertyId;
+  int? _activeContractId;
 
   @override
   void initState() {
@@ -31,9 +35,29 @@ class _DetailScreenState extends State<DetailScreen> {
 
   Future<void> _fetchDetail() async {
     final data = await _kostService.getPropertyDetail(widget.kost.id);
+    final contracts = await _kostService.getContracts();
+
+    bool hasActive = false;
+    int? contractId;
+
+    for (final c in contracts) {
+      if (c['status'] == 'Aktif') {
+        final property = c['property'];
+        if (property != null &&
+            property['id'].toString() == widget.kost.id.toString()) {
+          hasActive = true;
+          contractId = c['id'];
+          break;
+        }
+      }
+    }
+
     setState(() {
       _detail = data;
       _isLoading = false;
+      _hasActiveContract = hasActive;
+      _activePropertyId = widget.kost.id;
+      _activeContractId = contractId;
     });
   }
 
@@ -90,11 +114,6 @@ class _DetailScreenState extends State<DetailScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: BackButton(color: theme.iconTheme.color),
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
@@ -355,7 +374,6 @@ class _DetailScreenState extends State<DetailScreen> {
                   onPressed: () async {
                     final detail = _detail;
                     if (detail == null) return;
-
                     final ownerId = detail['owner']?['id'];
                     if (ownerId == null) {
                       Get.snackbar(
@@ -366,12 +384,9 @@ class _DetailScreenState extends State<DetailScreen> {
                       );
                       return;
                     }
-
                     final chatC = Get.put(ChatController());
-                    final conversation = await chatC.createOrGetConversation(
-                      ownerId,
-                    );
-
+                    final conversation =
+                        await chatC.createOrGetConversation(ownerId);
                     if (conversation != null) {
                       Get.to(
                         () => const ChatDetailScreen(),
@@ -402,26 +417,44 @@ class _DetailScreenState extends State<DetailScreen> {
                 height: 48,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.primary),
+                    side: BorderSide(
+                      color: _hasActiveContract
+                          ? Colors.orange
+                          : AppColors.primary,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
                     padding: EdgeInsets.zero,
                   ),
-                  onPressed: _isAddingWishlist ? null : _addToWishlist,
-                  child: _isAddingWishlist
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primary,
-                          ),
+                  onPressed: _hasActiveContract
+                      ? () => Get.to(
+                            () => ReportDetailScreen(
+                              prefilledPropertyId:
+                                  _activePropertyId ?? widget.kost.id,
+                              prefilledContractId: _activeContractId,
+                            ),
+                            transition: Transition.fadeIn,
+                          )
+                      : (_isAddingWishlist ? null : _addToWishlist),
+                  child: _hasActiveContract
+                      ? const Icon(
+                          Icons.report_problem_outlined,
+                          color: Colors.orange,
                         )
-                      : const Icon(
-                          Icons.bookmark_border,
-                          color: AppColors.primary,
-                        ),
+                      : _isAddingWishlist
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primary,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.bookmark_border,
+                              color: AppColors.primary,
+                            ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -438,9 +471,9 @@ class _DetailScreenState extends State<DetailScreen> {
                     ),
                     onPressed: () =>
                         Get.to(() => CheckoutScreen(kost: widget.kost)),
-                    child: const Text(
-                      'Sewa Sekarang',
-                      style: TextStyle(
+                    child: Text(
+                      _hasActiveContract ? 'Perpanjang Sewa' : 'Sewa Sekarang',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -533,7 +566,9 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          ...propertyFacilities.map((f) => _buildListItem(_facilityIcon(f), f)),
+          ...propertyFacilities.map(
+            (f) => _buildListItem(_facilityIcon(f), f),
+          ),
         ],
       ],
     );
@@ -657,7 +692,9 @@ class _DetailScreenState extends State<DetailScreen> {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: AppColors.primary.withAlpha((0.1 * 255).round()),
+              backgroundColor: AppColors.primary.withAlpha(
+                (0.1 * 255).round(),
+              ),
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : '?',
                 style: const TextStyle(
@@ -684,7 +721,10 @@ class _DetailScreenState extends State<DetailScreen> {
                     phone.isNotEmpty && phone != '-'
                         ? phone
                         : 'Belum ada nomor HP',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
