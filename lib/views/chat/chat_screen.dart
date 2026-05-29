@@ -183,8 +183,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                       child: OutlinedButton(
                                         style: OutlinedButton.styleFrom(
                                           shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                           ),
                                           side: BorderSide(
                                             color: theme.dividerColor,
@@ -196,7 +197,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                           'Batal',
                                           style: TextStyle(
                                             color: theme
-                                                .textTheme.bodySmall?.color,
+                                                .textTheme
+                                                .bodySmall
+                                                ?.color,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -209,13 +212,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                           backgroundColor:
                                               theme.colorScheme.error,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                           ),
                                           elevation: 0,
                                         ),
-                                        onPressed: () =>
-                                            Get.back(result: true),
+                                        onPressed: () => Get.back(result: true),
                                         child: Text(
                                           'Hapus',
                                           style: TextStyle(
@@ -235,8 +238,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
                       if (confirmed != true) return false;
 
-                      final success = await chatC
-                          .deleteConversation(chat['id']);
+                      final success = await chatC.deleteConversation(
+                        chat['id'],
+                      );
 
                       if (success) {
                         chatC.conversations.removeAt(originalIndex);
@@ -282,8 +286,9 @@ class _ChatScreenState extends State<ChatScreen> {
                           children: [
                             CircleAvatar(
                               radius: 28,
-                              backgroundColor: AppColors.primary
-                                  .withAlpha((0.2 * 255).round()),
+                              backgroundColor: AppColors.primary.withAlpha(
+                                (0.2 * 255).round(),
+                              ),
                               child: Text(
                                 chatName.isNotEmpty
                                     ? chatName[0].toUpperCase()

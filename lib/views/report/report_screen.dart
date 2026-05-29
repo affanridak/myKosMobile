@@ -101,9 +101,7 @@ class ReportScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withAlpha(
-                          (0.1 * 255).round(),
-                        ),
+                        color: AppColors.primary.withAlpha((0.1 * 255).round()),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../theme/app_colors.dart';
 import 'profile_change_password_screen.dart';
 import 'privacy_policy_screen.dart';
+import 'device_access_screen.dart';
 import '../../controllers/privacy_security_controller.dart';
 
 class PrivacySecurityScreen extends StatelessWidget {
@@ -75,7 +76,7 @@ class PrivacySecurityScreen extends StatelessWidget {
             context,
             'Kelola Akses Perangkat',
             Icons.devices_other_outlined,
-            () {},
+            () => Get.to(() => const DeviceAccessScreen()),
           ),
           const SizedBox(height: 24),
 

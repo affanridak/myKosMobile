@@ -235,7 +235,7 @@ class VirtualAccountScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                 ),
                 iconColor: AppColors.primary,
-                collapsedIconColor: Colors.grey,
+                collapsedIconColor: theme.textTheme.bodySmall?.color,
                 childrenPadding: const EdgeInsets.only(
                   left: 16,
                   right: 16,
@@ -245,7 +245,7 @@ class VirtualAccountScreen extends StatelessWidget {
                   Text(
                     '1. Buka aplikasi m-Banking atau kunjungi ATM terdekat.\n2. Pilih menu Transfer > Virtual Account.\n3. Masukkan nomor Virtual Account di atas.\n4. Pastikan nominal pembayaran sesuai dengan total tagihan.\n5. Konfirmasi pembayaran dan simpan bukti transaksi.',
                     style: TextStyle(
-                      color: Colors.grey.shade700,
+                      color: theme.textTheme.bodyMedium?.color?.withAlpha(204),
                       fontSize: 13,
                       height: 1.5,
                     ),

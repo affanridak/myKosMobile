@@ -29,8 +29,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
   File? _selectedImage;
   bool _isSubmitting = false;
 
-  bool get _isViewMode =>
-      widget.complaint != null && widget.complaint!.id != 0;
+  bool get _isViewMode => widget.complaint != null && widget.complaint!.id != 0;
 
   @override
   void dispose() {
@@ -53,11 +52,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     try {
       final result = await KostService().createComplaint(
         propertyId:
-            widget.prefilledPropertyId ??
-            widget.complaint?.propertyId ??
-            0,
-        contractId:
-            widget.prefilledContractId ?? widget.complaint?.contractId,
+            widget.prefilledPropertyId ?? widget.complaint?.propertyId ?? 0,
+        contractId: widget.prefilledContractId ?? widget.complaint?.contractId,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         imagePath: _selectedImage?.path,
@@ -186,9 +182,9 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: _statusColor(complaint.status).withAlpha(
-                  (0.15 * 255).round(),
-                ),
+                color: _statusColor(
+                  complaint.status,
+                ).withAlpha((0.15 * 255).round()),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -219,7 +215,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
               complaint.image!,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
             ),
           ),
         ],
@@ -321,10 +317,9 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
               theme,
               'Jelaskan masalah secara detail...',
             ),
-            validator: (val) =>
-                val == null || val.isEmpty
-                    ? 'Deskripsi tidak boleh kosong'
-                    : null,
+            validator: (val) => val == null || val.isEmpty
+                ? 'Deskripsi tidak boleh kosong'
+                : null,
           ),
           const SizedBox(height: 20),
           _buildLabel(theme, 'Foto (Opsional)'),
@@ -357,10 +352,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                           size: 32,
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'Tambah Foto',
-                          style: theme.textTheme.bodySmall,
-                        ),
+                        Text('Tambah Foto', style: theme.textTheme.bodySmall),
                       ],
                     ),
             ),
@@ -426,10 +418,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       ),
       filled: true,
       fillColor: theme.cardColor,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 14,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 }

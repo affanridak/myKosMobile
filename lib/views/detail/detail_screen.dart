@@ -88,20 +88,19 @@ class _DetailScreenState extends State<DetailScreen> {
     setState(() => _isAddingWishlist = true);
     final added = await _kostService.toggleWishlist(widget.kost.id);
     if (!mounted) return;
-    final theme = Theme.of(context);
     if (added) {
       Get.snackbar(
         'Berhasil',
         'Kost ditambahkan ke wishlist',
-        backgroundColor: theme.colorScheme.secondary,
-        colorText: theme.colorScheme.onSecondary,
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        colorText: Theme.of(context).colorScheme.onSecondary,
       );
     } else {
       Get.snackbar(
         'Gagal',
         'Gagal menambahkan wishlist',
-        backgroundColor: theme.colorScheme.error,
-        colorText: theme.colorScheme.onError,
+        backgroundColor: Theme.of(context).colorScheme.error,
+        colorText: Theme.of(context).colorScheme.onError,
       );
     }
     setState(() => _isAddingWishlist = false);
@@ -109,11 +108,10 @@ class _DetailScreenState extends State<DetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final kost = widget.kost;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
@@ -121,7 +119,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 SliverAppBar(
                   expandedHeight: 300,
                   pinned: true,
-                  backgroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   leading: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: CircleAvatar(
@@ -180,8 +178,8 @@ class _DetailScreenState extends State<DetailScreen> {
                 ),
                 SliverToBoxAdapter(
                   child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.vertical(
                         top: Radius.circular(24),
                       ),
@@ -235,7 +233,9 @@ class _DetailScreenState extends State<DetailScreen> {
                             Text(
                               '(${_detail?['review_count'] ?? 0} ulasan)',
                               style: TextStyle(
-                                color: Colors.grey.shade600,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.color?.withAlpha(153),
                                 fontSize: 13,
                               ),
                             ),
@@ -244,7 +244,7 @@ class _DetailScreenState extends State<DetailScreen> {
                               width: 4,
                               height: 4,
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade400,
+                                color: Theme.of(context).dividerColor,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -259,7 +259,9 @@ class _DetailScreenState extends State<DetailScreen> {
                               child: Text(
                                 kost.location,
                                 style: TextStyle(
-                                  color: Colors.grey.shade600,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.color?.withAlpha(153),
                                   fontSize: 13,
                                 ),
                                 maxLines: 1,
@@ -286,7 +288,9 @@ class _DetailScreenState extends State<DetailScreen> {
                                 ' /bulan',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey.shade600,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.color?.withAlpha(153),
                                 ),
                               ),
                             ),
@@ -303,37 +307,39 @@ class _DetailScreenState extends State<DetailScreen> {
                         const SizedBox(height: 8),
                         Text(
                           _detail?['description'] ?? kost.description ?? '-',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color?.withAlpha(153),
                             height: 1.5,
                           ),
                         ),
                         Divider(
-                          color: Colors.grey.shade100,
+                          color: Theme.of(context).dividerColor,
                           thickness: 8,
                           height: 48,
                         ),
                         _buildFasilitas(),
                         Divider(
-                          color: Colors.grey.shade100,
+                          color: Theme.of(context).dividerColor,
                           thickness: 8,
                           height: 48,
                         ),
                         _buildPeraturan(),
                         Divider(
-                          color: Colors.grey.shade100,
+                          color: Theme.of(context).dividerColor,
                           thickness: 8,
                           height: 48,
                         ),
                         _buildLokasi(),
                         Divider(
-                          color: Colors.grey.shade100,
+                          color: Theme.of(context).dividerColor,
                           thickness: 8,
                           height: 48,
                         ),
                         _buildOwnerInfo(),
                         Divider(
-                          color: Colors.grey.shade100,
+                          color: Theme.of(context).dividerColor,
                           thickness: 8,
                           height: 48,
                         ),
@@ -347,11 +353,11 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black12,
+              color: Theme.of(context).shadowColor.withAlpha(13),
               blurRadius: 10,
               offset: Offset(0, -2),
             ),
@@ -385,8 +391,9 @@ class _DetailScreenState extends State<DetailScreen> {
                       return;
                     }
                     final chatC = Get.put(ChatController());
-                    final conversation =
-                        await chatC.createOrGetConversation(ownerId);
+                    final conversation = await chatC.createOrGetConversation(
+                      ownerId,
+                    );
                     if (conversation != null) {
                       Get.to(
                         () => const ChatDetailScreen(),
@@ -429,13 +436,13 @@ class _DetailScreenState extends State<DetailScreen> {
                   ),
                   onPressed: _hasActiveContract
                       ? () => Get.to(
-                            () => ReportDetailScreen(
-                              prefilledPropertyId:
-                                  _activePropertyId ?? widget.kost.id,
-                              prefilledContractId: _activeContractId,
-                            ),
-                            transition: Transition.fadeIn,
-                          )
+                          () => ReportDetailScreen(
+                            prefilledPropertyId:
+                                _activePropertyId ?? widget.kost.id,
+                            prefilledContractId: _activeContractId,
+                          ),
+                          transition: Transition.fadeIn,
+                        )
                       : (_isAddingWishlist ? null : _addToWishlist),
                   child: _hasActiveContract
                       ? const Icon(
@@ -443,18 +450,18 @@ class _DetailScreenState extends State<DetailScreen> {
                           color: Colors.orange,
                         )
                       : _isAddingWishlist
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.primary,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.bookmark_border,
-                              color: AppColors.primary,
-                            ),
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.bookmark_border,
+                          color: AppColors.primary,
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -473,7 +480,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         Get.to(() => CheckoutScreen(kost: widget.kost)),
                     child: Text(
                       _hasActiveContract ? 'Perpanjang Sewa' : 'Sewa Sekarang',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -494,10 +501,10 @@ class _DetailScreenState extends State<DetailScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
+          color: Theme.of(context).textTheme.bodyLarge?.color,
         ),
       ),
     );
@@ -518,8 +525,10 @@ class _DetailScreenState extends State<DetailScreen> {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color?.withAlpha(153),
                 height: 1.4,
               ),
             ),
@@ -546,11 +555,11 @@ class _DetailScreenState extends State<DetailScreen> {
       children: [
         _buildSectionTitle('Fasilitas'),
         if (roomFacilities.isNotEmpty) ...[
-          const Text(
+          Text(
             'Fasilitas Kamar',
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -558,17 +567,15 @@ class _DetailScreenState extends State<DetailScreen> {
           const SizedBox(height: 16),
         ],
         if (propertyFacilities.isNotEmpty) ...[
-          const Text(
+          Text(
             'Fasilitas Umum',
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
-          ...propertyFacilities.map(
-            (f) => _buildListItem(_facilityIcon(f), f),
-          ),
+          ...propertyFacilities.map((f) => _buildListItem(_facilityIcon(f), f)),
         ],
       ],
     );
@@ -628,8 +635,10 @@ class _DetailScreenState extends State<DetailScreen> {
             Expanded(
               child: Text(
                 '$address, $city',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.color?.withAlpha(153),
                   height: 1.5,
                 ),
               ),
@@ -643,7 +652,7 @@ class _DetailScreenState extends State<DetailScreen> {
             height: 160,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
+              color: Theme.of(context).dividerColor,
               borderRadius: BorderRadius.circular(16),
               image: const DecorationImage(
                 image: NetworkImage(
@@ -655,14 +664,14 @@ class _DetailScreenState extends State<DetailScreen> {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                color: Colors.black.withAlpha((0.2 * 255).round()),
+                color: Theme.of(context).shadowColor.withAlpha(51),
               ),
-              child: const Center(
+              child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.location_on, size: 40, color: Colors.red),
-                    SizedBox(height: 8),
+                    const Icon(Icons.location_on, size: 40, color: Colors.red),
+                    const SizedBox(height: 8),
                     Text(
                       'Buka di Google Maps',
                       style: TextStyle(
@@ -692,9 +701,7 @@ class _DetailScreenState extends State<DetailScreen> {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: AppColors.primary.withAlpha(
-                (0.1 * 255).round(),
-              ),
+              backgroundColor: AppColors.primary.withAlpha((0.1 * 255).round()),
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : '?',
                 style: const TextStyle(
@@ -722,7 +729,9 @@ class _DetailScreenState extends State<DetailScreen> {
                         ? phone
                         : 'Belum ada nomor HP',
                     style: TextStyle(
-                      color: Colors.grey.shade600,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withAlpha(153),
                       fontSize: 13,
                     ),
                   ),
@@ -763,11 +772,13 @@ class _DetailScreenState extends State<DetailScreen> {
                         height: 1.0,
                       ),
                     ),
-                    const Text(
+                    Text(
                       ' / 5.0',
                       style: TextStyle(
                         fontSize: 16,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withAlpha(153),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -776,8 +787,10 @@ class _DetailScreenState extends State<DetailScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Berdasarkan $reviewCount ulasan',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withAlpha(153),
                     fontSize: 13,
                   ),
                 ),
@@ -787,9 +800,13 @@ class _DetailScreenState extends State<DetailScreen> {
         ),
         const SizedBox(height: 20),
         if (reviews.isEmpty)
-          const Text(
+          Text(
             'Belum ada ulasan',
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(
+              color: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.color?.withAlpha(153),
+            ),
           )
         else
           ...reviews.map(
@@ -840,8 +857,10 @@ class _DetailScreenState extends State<DetailScreen> {
                     ),
                     Text(
                       date,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.color?.withAlpha(153),
                         fontSize: 11,
                       ),
                     ),
@@ -863,8 +882,10 @@ class _DetailScreenState extends State<DetailScreen> {
           const SizedBox(height: 10),
           Text(
             review,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.color?.withAlpha(153),
               fontSize: 13,
               height: 1.4,
             ),

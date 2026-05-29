@@ -82,7 +82,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    Get.to(() => const());
+                    Get.to(() => const ());
                   },
                   child: const Text(
                     'Lihat Detail Pesanan',
