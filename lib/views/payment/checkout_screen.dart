@@ -70,7 +70,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     controller.selectedRoomTypeId.value = defaultRoom['id'] as int;
 
     // Sesuaikan rental type dari room type yang dipilih
-    final rentalType = defaultRoom['rental_type'] as String? ?? widget.kost.rentalType;
+    final rentalType =
+        defaultRoom['rental_type'] as String? ?? widget.kost.rentalType;
     controller.durationType.value = rentalType;
 
     setState(() {
@@ -125,9 +126,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int _getSelectedRoomPrice() {
     if (_roomTypes.isEmpty) return widget.kost.price;
     final selectedId = controller.selectedRoomTypeId.value;
-    final found = _roomTypes.firstWhereOrNull(
-      (r) => r['id'] == selectedId,
-    );
+    final found = _roomTypes.firstWhereOrNull((r) => r['id'] == selectedId);
     return (found?['price'] as int?) ?? widget.kost.price;
   }
 
@@ -160,44 +159,44 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       body: _isFetchingRoomType
           ? const Center(child: CircularProgressIndicator())
           : _fetchError != null
-              ? _buildErrorState(theme)
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Informasi Kost',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildKostInfo(theme),
-                      const SizedBox(height: 24),
-                      const Text(
-                        'Detail Sewa',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildDatePicker(theme),
-                      const SizedBox(height: 12),
-                      // Pilihan tipe kamar (jika lebih dari 1 room type)
-                      if (_roomTypes.length > 1) ...[
-                        _buildRoomTypePicker(theme),
-                        const SizedBox(height: 12),
-                      ],
-                      _buildRentalTypePicker(theme),
-                      const SizedBox(height: 12),
-                      _buildDurationPicker(theme),
-                      const SizedBox(height: 32),
-                      const Text(
-                        'Rincian Pembayaran',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildPaymentDetail(theme),
-                    ],
+          ? _buildErrorState(theme)
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Informasi Kost',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  _buildKostInfo(theme),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Detail Sewa',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildDatePicker(theme),
+                  const SizedBox(height: 12),
+                  // Pilihan tipe kamar (jika lebih dari 1 room type)
+                  if (_roomTypes.length > 1) ...[
+                    _buildRoomTypePicker(theme),
+                    const SizedBox(height: 12),
+                  ],
+                  _buildRentalTypePicker(theme),
+                  const SizedBox(height: 12),
+                  _buildDurationPicker(theme),
+                  const SizedBox(height: 32),
+                  const Text(
+                    'Rincian Pembayaran',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPaymentDetail(theme),
+                ],
+              ),
+            ),
       bottomNavigationBar: _isFetchingRoomType || _fetchError != null
           ? null
           : _buildBottomBar(theme),
@@ -242,7 +241,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     width: 80,
                     height: 80,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, _) => _imagePlaceholder(theme),
+                    errorBuilder: (context, error, _) =>
+                        _imagePlaceholder(theme),
                   )
                 : _imagePlaceholder(theme),
           ),
@@ -252,7 +252,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withAlpha((0.1 * 255).round()),
                     borderRadius: BorderRadius.circular(8),
@@ -269,14 +272,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 const SizedBox(height: 6),
                 Text(
                   kost.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, size: 14, color: AppColors.primary),
+                    const Icon(
+                      Icons.location_on,
+                      size: 14,
+                      color: AppColors.primary,
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
@@ -347,8 +357,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      DateFormat('dd MMMM yyyy').format(controller.selectedDate.value),
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      DateFormat(
+                        'dd MMMM yyyy',
+                      ).format(controller.selectedDate.value),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -389,7 +404,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     color: AppColors.primary.withAlpha((0.1 * 255).round()),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.bed_outlined, color: AppColors.primary, size: 20),
+                  child: const Icon(
+                    Icons.bed_outlined,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 const Text(
@@ -402,7 +421,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ..._roomTypes.map((room) {
               final roomId = room['id'] as int;
               final isSelected = controller.selectedRoomTypeId.value == roomId;
-              final roomRentalType = room['rental_type'] as String? ?? 'monthly';
+              final roomRentalType =
+                  room['rental_type'] as String? ?? 'monthly';
               final roomPrice = room['price'] as int? ?? 0;
               final roomName = room['name'] as String? ?? '-';
 
@@ -415,14 +435,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary.withAlpha((0.08 * 255).round())
                         : theme.scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? AppColors.primary : theme.dividerColor,
+                      color: isSelected
+                          ? AppColors.primary
+                          : theme.dividerColor,
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -432,7 +457,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         isSelected
                             ? Icons.radio_button_checked
                             : Icons.radio_button_unchecked,
-                        color: isSelected ? AppColors.primary : theme.dividerColor,
+                        color: isSelected
+                            ? AppColors.primary
+                            : theme.dividerColor,
                         size: 18,
                       ),
                       const SizedBox(width: 10),
@@ -440,7 +467,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         child: Text(
                           roomName,
                           style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                             color: isSelected
                                 ? AppColors.primary
                                 : theme.textTheme.bodyLarge?.color,
@@ -451,7 +480,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         'Rp$roomPrice/${roomRentalType == 'monthly' ? 'bln' : 'hari'}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: isSelected ? AppColors.primary : theme.textTheme.bodySmall?.color,
+                          color: isSelected
+                              ? AppColors.primary
+                              : theme.textTheme.bodySmall?.color,
                           fontSize: 13,
                         ),
                       ),
@@ -472,13 +503,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final selectedRoom = _roomTypes.firstWhereOrNull(
         (r) => r['id'] == controller.selectedRoomTypeId.value,
       );
-      final roomRentalType = selectedRoom?['rental_type'] as String? ?? widget.kost.rentalType;
+      final roomRentalType =
+          selectedRoom?['rental_type'] as String? ?? widget.kost.rentalType;
 
       List<Map<String, String>> availableTypes;
       if (roomRentalType == 'daily') {
-        availableTypes = [{'value': 'daily', 'label': 'Harian'}];
+        availableTypes = [
+          {'value': 'daily', 'label': 'Harian'},
+        ];
       } else if (roomRentalType == 'monthly') {
-        availableTypes = [{'value': 'monthly', 'label': 'Bulanan'}];
+        availableTypes = [
+          {'value': 'monthly', 'label': 'Bulanan'},
+        ];
       } else {
         availableTypes = [
           {'value': 'monthly', 'label': 'Bulanan'},
@@ -498,10 +534,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary.withAlpha((0.1 * 255).round()),
+                color: Theme.of(
+                  context,
+                ).colorScheme.secondary.withAlpha((0.1 * 255).round()),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.tune, color: Theme.of(context).colorScheme.secondary, size: 20),
+              child: Icon(
+                Icons.tune,
+                color: Theme.of(context).colorScheme.secondary,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 16),
             const Text(
@@ -515,12 +557,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 onTap: () => controller.setDurationType(type['value']!),
                 child: Container(
                   margin: const EdgeInsets.only(left: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected ? AppColors.primary : theme.cardColor,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? AppColors.primary : theme.dividerColor,
+                      color: isSelected
+                          ? AppColors.primary
+                          : theme.dividerColor,
                     ),
                   ),
                   child: Text(
@@ -530,7 +577,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ? Theme.of(context).colorScheme.onPrimary
                           : theme.textTheme.bodySmall?.color,
                       fontSize: 12,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -561,7 +610,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   color: AppColors.primary.withAlpha((0.1 * 255).round()),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.access_time, color: AppColors.primary, size: 20),
+                child: const Icon(
+                  Icons.access_time,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 16),
               const Text(
@@ -587,7 +640,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 Obx(
                   () => Text(
                     '${controller.duration.value} ${controller.durationType.value == 'monthly' ? 'Bln' : 'Hari'}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -625,7 +681,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 16),
             Container(height: 1, color: theme.dividerColor),
             const SizedBox(height: 16),
-            _buildReceiptRow(context, 'Total Pembayaran', 'Rp$total', isTotal: true),
+            _buildReceiptRow(
+              context,
+              'Total Pembayaran',
+              'Rp$total',
+              isTotal: true,
+            ),
           ],
         );
       }),
@@ -677,14 +738,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Obx(
               () => ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      controller.isLoading.value ? Colors.grey : AppColors.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  backgroundColor: controller.isLoading.value
+                      ? Colors.grey
+                      : AppColors.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                onPressed: controller.isLoading.value ? null : _submitRentalRequest,
+                onPressed: controller.isLoading.value
+                    ? null
+                    : _submitRentalRequest,
                 child: controller.isLoading.value
                     ? const SizedBox(
                         width: 20,

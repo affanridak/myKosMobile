@@ -27,8 +27,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Future<void> _fetchDetail() async {
     setState(() => _isLoading = true);
-    final data =
-        await _kostService.getRentalRequestDetail(widget.rentalRequestId);
+    final data = await _kostService.getRentalRequestDetail(
+      widget.rentalRequestId,
+    );
     setState(() {
       _detail = data;
       _isLoading = false;
@@ -37,10 +38,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Color _getColor(String colorStr) {
     switch (colorStr) {
-      case 'green':  return Colors.green;
-      case 'orange': return Colors.orange;
-      case 'red':    return Colors.red;
-      default:       return Colors.grey;
+      case 'green':
+        return Colors.green;
+      case 'orange':
+        return Colors.orange;
+      case 'red':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -52,18 +57,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       return Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor:
-              theme.appBarTheme.backgroundColor ?? theme.cardColor,
+          backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
           elevation: 0,
           leading: IconButton(
             icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
             onPressed: () => Get.back(),
           ),
-          title: Text('Detail Pengajuan',
-              style: TextStyle(
-                  color: theme.textTheme.bodyLarge?.color,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold)),
+          title: Text(
+            'Detail Pengajuan',
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           centerTitle: true,
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -80,7 +87,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               const SizedBox(height: 16),
               const Text('Data tidak ditemukan'),
               ElevatedButton(
-                  onPressed: () => Get.back(), child: const Text('Kembali')),
+                onPressed: () => Get.back(),
+                child: const Text('Kembali'),
+              ),
             ],
           ),
         ),
@@ -99,18 +108,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor:
-            theme.appBarTheme.backgroundColor ?? theme.cardColor,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.cardColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
           onPressed: () => Get.back(),
         ),
-        title: Text('Detail Pengajuan',
-            style: TextStyle(
-                color: theme.textTheme.bodyLarge?.color,
-                fontSize: 18,
-                fontWeight: FontWeight.bold)),
+        title: Text(
+          'Detail Pengajuan',
+          style: TextStyle(
+            color: theme.textTheme.bodyLarge?.color,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
         actions: [
           IconButton(
@@ -138,8 +149,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       isApproved
                           ? Icons.check_circle
                           : status == 'rejected'
-                              ? Icons.cancel
-                              : Icons.access_time,
+                          ? Icons.cancel
+                          : Icons.access_time,
                       color: statusColor,
                       size: 40,
                     ),
@@ -148,16 +159,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   Text(
                     statusLabel,
                     style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: statusColor),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     _detail!['created_at'] ?? '-',
                     style: TextStyle(
-                        color: theme.textTheme.bodySmall?.color,
-                        fontSize: 13),
+                      color: theme.textTheme.bodySmall?.color,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -165,11 +178,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             const SizedBox(height: 32),
 
             // Info Kost
-            Text('Informasi Kost',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: theme.textTheme.bodyLarge?.color)),
+            Text(
+              'Informasi Kost',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(16),
@@ -182,46 +198,61 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: property['image_url'] != null &&
+                    child:
+                        property['image_url'] != null &&
                             property['image_url'].toString().startsWith('http')
-                        ? Image.network(property['image_url'],
-                            width: 80, height: 80, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                                width: 80,
-                                height: 80,
-                                color: theme.dividerColor,
-                                child: const Icon(Icons.home)))
+                        ? Image.network(
+                            property['image_url'],
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Container(
+                              width: 80,
+                              height: 80,
+                              color: theme.dividerColor,
+                              child: const Icon(Icons.home),
+                            ),
+                          )
                         : Container(
                             width: 80,
                             height: 80,
                             color: theme.dividerColor,
-                            child: const Icon(Icons.home)),
+                            child: const Icon(Icons.home),
+                          ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(property['name'] ?? '-',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 4),
                         Text(
-                          '${property['address'] ?? ''}, ${property['city'] ?? ''}',
-                          style: TextStyle(
-                              color: theme.textTheme.bodySmall?.color,
-                              fontSize: 12),
+                          property['name'] ?? '-',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        Text(roomType['name'] ?? '-',
-                            style: const TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600)),
+                        Text(
+                          '${property['address'] ?? ''}, ${property['city'] ?? ''}',
+                          style: TextStyle(
+                            color: theme.textTheme.bodySmall?.color,
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          roomType['name'] ?? '-',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -231,11 +262,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             const SizedBox(height: 24),
 
             // Detail Pengajuan
-            Text('Detail Pengajuan',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: theme.textTheme.bodyLarge?.color)),
+            Text(
+              'Detail Pengajuan',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(16),
@@ -246,13 +280,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ),
               child: Column(
                 children: [
-                  _buildRow(context, 'Tanggal Masuk',
-                      _detail!['start_date'] ?? '-'),
+                  _buildRow(
+                    context,
+                    'Tanggal Masuk',
+                    _detail!['start_date'] ?? '-',
+                  ),
                   const Divider(height: 20),
                   _buildRow(
-                      context,
-                      'Lama Sewa',
-                      '${_detail!['duration_value']} ${_detail!['duration_type'] == 'monthly' ? 'Bulan' : 'Hari'}'),
+                    context,
+                    'Lama Sewa',
+                    '${_detail!['duration_value']} ${_detail!['duration_type'] == 'monthly' ? 'Bulan' : 'Hari'}',
+                  ),
                   if (_detail!['note'] != null &&
                       _detail!['note'].toString().isNotEmpty) ...[
                     const Divider(height: 20),
@@ -264,11 +302,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             const SizedBox(height: 24),
 
             // Rincian Pembayaran
-            Text('Rincian Pembayaran',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: theme.textTheme.bodyLarge?.color)),
+            Text(
+              'Rincian Pembayaran',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: theme.textTheme.bodyLarge?.color,
+              ),
+            ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(16),
@@ -280,17 +321,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               child: Column(
                 children: [
                   _buildRow(
-                      context,
-                      'Harga per ${_detail!['duration_type'] == 'monthly' ? 'Bulan' : 'Hari'}',
-                      'Rp${roomType['price'] ?? 0}'),
+                    context,
+                    'Harga per ${_detail!['duration_type'] == 'monthly' ? 'Bulan' : 'Hari'}',
+                    'Rp${roomType['price'] ?? 0}',
+                  ),
                   const Divider(height: 20),
                   _buildRow(
-                      context,
-                      'Durasi',
-                      '× ${_detail!['duration_value']}'),
+                    context,
+                    'Durasi',
+                    '× ${_detail!['duration_value']}',
+                  ),
                   const Divider(height: 20),
-                  _buildRow(context, 'Total', 'Rp$totalPrice',
-                      isTotal: true),
+                  _buildRow(context, 'Total', 'Rp$totalPrice', isTotal: true),
                 ],
               ),
             ),
@@ -306,14 +348,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline,
-                        color: Colors.orange, size: 20),
+                    const Icon(
+                      Icons.info_outline,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
                     const SizedBox(width: 10),
                     const Expanded(
                       child: Text(
                         'Pengajuan kamu sedang menunggu persetujuan pemilik kost. Kamu akan mendapat notifikasi saat disetujui.',
-                        style:
-                            TextStyle(color: Colors.orange, fontSize: 13),
+                        style: TextStyle(color: Colors.orange, fontSize: 13),
                       ),
                     ),
                   ],
@@ -332,8 +376,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.cancel_outlined,
-                        color: Colors.red, size: 20),
+                    Icon(Icons.cancel_outlined, color: Colors.red, size: 20),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -370,16 +413,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
-                    onPressed: () => Get.to(() => PaymentMethodScreen(
-                          totalAmount: totalPrice,
-                        )),
-                    child: const Text('Lanjut Bayar',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
+                    onPressed: () => Get.to(
+                      () => PaymentMethodScreen(totalAmount: totalPrice),
+                    ),
+                    child: const Text(
+                      'Lanjut Bayar',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 )
               // Jika pending/rejected → tombol ke beranda
@@ -390,14 +437,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.primary),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                     onPressed: () => Get.offAll(() => MainLayout()),
-                    child: const Text('Ke Beranda',
-                        style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Ke Beranda',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
         ),
@@ -405,28 +456,36 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  Widget _buildRow(BuildContext context, String label, String value,
-      {bool isTotal = false}) {
+  Widget _buildRow(
+    BuildContext context,
+    String label,
+    String value, {
+    bool isTotal = false,
+  }) {
     final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: TextStyle(
-                color: isTotal
-                    ? theme.textTheme.bodyLarge?.color
-                    : theme.textTheme.bodySmall?.color,
-                fontWeight:
-                    isTotal ? FontWeight.bold : FontWeight.normal,
-                fontSize: isTotal ? 16 : 14)),
-        Text(value,
-            style: TextStyle(
-                color: isTotal
-                    ? AppColors.primary
-                    : theme.textTheme.bodyLarge?.color,
-                fontWeight:
-                    isTotal ? FontWeight.bold : FontWeight.w600,
-                fontSize: isTotal ? 16 : 14)),
+        Text(
+          label,
+          style: TextStyle(
+            color: isTotal
+                ? theme.textTheme.bodyLarge?.color
+                : theme.textTheme.bodySmall?.color,
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            fontSize: isTotal ? 16 : 14,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: isTotal
+                ? AppColors.primary
+                : theme.textTheme.bodyLarge?.color,
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
+            fontSize: isTotal ? 16 : 14,
+          ),
+        ),
       ],
     );
   }

@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/kost_model.dart';
+import '../config/api_config.dart';
 
 class KostService {
   static final KostService _instance = KostService._internal();
   factory KostService() => _instance;
   KostService._internal();
 
-  final String _baseUrl = 'https://chess-gore-patience.ngrok-free.dev/api';
+  String get _baseUrl => ApiConfig.baseUrl;
   final Map<String, String> _headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

@@ -87,14 +87,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor:
-                  AppColors.primary.withAlpha((0.2 * 255).round()),
+              backgroundColor: AppColors.primary.withAlpha((0.2 * 255).round()),
               child: Text(
                 (otherUser['name'] as String).isNotEmpty
                     ? (otherUser['name'] as String)[0].toUpperCase()
                     : '?',
                 style: const TextStyle(
-                    color: AppColors.primary, fontWeight: FontWeight.bold),
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -142,15 +143,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   final msg = chatC.currentMessages[index];
 
                   final senderId = msg['sender_id'];
-                  bool isMe = senderId == userOneId ||
+                  bool isMe =
+                      senderId == userOneId ||
                       senderId.toString() == userOneId.toString();
 
                   String text = msg['message'] ?? '';
                   String timeStr = '';
                   if (msg['created_at'] != null) {
                     try {
-                      DateTime dt =
-                          DateTime.parse(msg['created_at']).toLocal();
+                      DateTime dt = DateTime.parse(msg['created_at']).toLocal();
                       timeStr =
                           "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
                     } catch (e) {

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import '../config/api_config.dart';
 
 class AuthResult {
   final bool success;
@@ -16,7 +18,7 @@ class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  final String _baseUrl = 'https://chess-gore-patience.ngrok-free.dev/api';
+  String get _baseUrl => ApiConfig.baseUrl;
 
   final Map<String, String> _headers = {
     'Content-Type': 'application/json',
@@ -26,6 +28,35 @@ class AuthService {
 
   /// Getter publik agar service lain bisa menggunakan base URL yang sama.
   String get baseUrl => _baseUrl;
+
+  Future<Map<String, String>> _getHeadersWithDeviceName() async {
+    final headers = Map<String, String>.from(_headers);
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      String deviceName = 'flutter-app';
+
+      if (kIsWeb) {
+        final webInfo = await deviceInfo.webBrowserInfo;
+        deviceName = 'Web Browser (${webInfo.browserName.name})';
+      } else if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        deviceName = '${androidInfo.brand} ${androidInfo.model}';
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        deviceName =
+            '${iosInfo.name} (${iosInfo.systemName} ${iosInfo.systemVersion})';
+      } else if (Platform.isWindows) {
+        deviceName = 'Windows PC';
+      }
+
+      // Pastikan nama perangkat tidak terlalu panjang dan rapi
+      headers['User-Agent'] = deviceName.toUpperCase();
+    } catch (e) {
+      debugPrint('Device Info Error: $e');
+      headers['User-Agent'] = 'Unknown Device';
+    }
+    return headers;
+  }
 
   String get _origin {
     final baseUri = Uri.parse(_baseUrl);
@@ -328,9 +359,10 @@ class AuthService {
 
   Future<AuthResult> login(String email, String password) async {
     try {
+      final dynamicHeaders = await _getHeadersWithDeviceName();
       final response = await http.post(
         Uri.parse('$_baseUrl/login'),
-        headers: _headers,
+        headers: dynamicHeaders,
         body: jsonEncode({'email': email, 'password': password}),
       );
       final data = jsonDecode(response.body);
@@ -366,9 +398,10 @@ class AuthService {
     String password,
   ) async {
     try {
+      final dynamicHeaders = await _getHeadersWithDeviceName();
       final response = await http.post(
         Uri.parse('$_baseUrl/register'),
-        headers: _headers,
+        headers: dynamicHeaders,
         body: jsonEncode({
           'name': name,
           'email': email,
@@ -525,7 +558,12 @@ class AuthService {
         await prefs.setString('role', data['role'] ?? 'tenant');
         await prefs.setString('phone', data['phone'] ?? '');
         if (data['id'] != null) {
-          await prefs.setInt('user_id', data['id'] is int ? data['id'] : int.tryParse(data['id'].toString()) ?? 0);
+          await prefs.setInt(
+            'user_id',
+            data['id'] is int
+                ? data['id']
+                : int.tryParse(data['id'].toString()) ?? 0,
+          );
         }
         final email = data['email'] ?? prefs.getString('email') ?? '';
         final key = email.isNotEmpty
@@ -542,6 +580,45 @@ class AuthService {
       }
     } catch (e) {
       //
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getActiveDevices() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return [];
+
+      final response = await http.get(
+        Uri.parse('$_baseUrl/user/devices'),
+        headers: {..._headers, 'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List list = data['data'] ?? [];
+        return list.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> revokeDevice(int tokenId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return false;
+
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/user/devices/$tokenId'),
+        headers: {..._headers, 'Authorization': 'Bearer $token'},
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
     }
   }
 

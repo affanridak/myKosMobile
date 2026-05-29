@@ -12,16 +12,13 @@ class TransactionHistoryScreen extends StatefulWidget {
       _TransactionHistoryScreenState();
 }
 
-class _TransactionHistoryScreenState
-    extends State<TransactionHistoryScreen> {
+class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   final KostService _kostService = KostService();
   List<Map<String, dynamic>> _requests = [];
   bool _isLoading = true;
   String _selectedFilter = 'Semua';
 
-  final List<String> _filters = [
-    'Semua', 'Menunggu', 'Disetujui', 'Ditolak'
-  ];
+  final List<String> _filters = ['Semua', 'Menunggu', 'Disetujui', 'Ditolak'];
 
   @override
   void initState() {
@@ -47,10 +44,14 @@ class _TransactionHistoryScreenState
 
   Color _getColor(String colorStr) {
     switch (colorStr) {
-      case 'green':  return Colors.green;
-      case 'orange': return Colors.orange;
-      case 'red':    return Colors.red;
-      default:       return Colors.grey;
+      case 'green':
+        return Colors.green;
+      case 'orange':
+        return Colors.orange;
+      case 'red':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -70,9 +71,10 @@ class _TransactionHistoryScreenState
         title: Text(
           'Riwayat Pengajuan',
           style: TextStyle(
-              color: theme.textTheme.bodyLarge?.color,
-              fontSize: 18,
-              fontWeight: FontWeight.bold),
+            color: theme.textTheme.bodyLarge?.color,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         actions: [
@@ -90,7 +92,9 @@ class _TransactionHistoryScreenState
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 12),
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   child: Row(
                     children: _filters.map((f) {
                       final isSelected = _selectedFilter == f;
@@ -134,22 +138,26 @@ class _TransactionHistoryScreenState
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.receipt_long_outlined,
-                                  size: 80,
-                                  color: theme.dividerColor),
+                              Icon(
+                                Icons.receipt_long_outlined,
+                                size: 80,
+                                color: theme.dividerColor,
+                              ),
                               const SizedBox(height: 16),
-                              Text('Belum ada pengajuan',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: theme.textTheme.bodyLarge
-                                          ?.color)),
+                              Text(
+                                'Belum ada pengajuan',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.textTheme.bodyLarge?.color,
+                                ),
+                              ),
                               const SizedBox(height: 8),
                               Text(
                                 'Pengajuan sewa kost akan muncul di sini',
                                 style: TextStyle(
-                                    color:
-                                        theme.textTheme.bodySmall?.color),
+                                  color: theme.textTheme.bodySmall?.color,
+                                ),
                               ),
                             ],
                           ),
@@ -162,8 +170,9 @@ class _TransactionHistoryScreenState
                             itemCount: _filtered.length,
                             itemBuilder: (context, index) {
                               final r = _filtered[index];
-                              final color =
-                                  _getColor(r['status_color'] ?? 'grey');
+                              final color = _getColor(
+                                r['status_color'] ?? 'grey',
+                              );
                               final property = r['property'] ?? {};
                               final roomType = r['room_type'] ?? {};
 
@@ -178,12 +187,12 @@ class _TransactionHistoryScreenState
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
                                     color: theme.cardColor,
-                                    borderRadius:
-                                        BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                        color: theme.dividerColor
-                                            .withAlpha(
-                                                (0.35 * 255).round())),
+                                      color: theme.dividerColor.withAlpha(
+                                        (0.35 * 255).round(),
+                                      ),
+                                    ),
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
@@ -193,31 +202,35 @@ class _TransactionHistoryScreenState
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(r['created_at'] ?? '-',
-                                              style: TextStyle(
-                                                  color: theme
-                                                      .textTheme
-                                                      .bodySmall
-                                                      ?.color,
-                                                  fontSize: 12)),
+                                          Text(
+                                            r['created_at'] ?? '-',
+                                            style: TextStyle(
+                                              color: theme
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.color,
+                                              fontSize: 12,
+                                            ),
+                                          ),
                                           Container(
-                                            padding:
-                                                const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: color.withAlpha(
-                                                  (0.1 * 255).round()),
+                                                (0.1 * 255).round(),
+                                              ),
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                             ),
                                             child: Text(
                                               r['status_label'] ?? '-',
                                               style: TextStyle(
-                                                  color: color,
-                                                  fontSize: 10,
-                                                  fontWeight:
-                                                      FontWeight.bold),
+                                                color: color,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -226,10 +239,11 @@ class _TransactionHistoryScreenState
                                       Row(
                                         children: [
                                           ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            child: property['image_url'] !=
-                                                        null &&
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            child:
+                                                property['image_url'] != null &&
                                                     property['image_url']
                                                         .toString()
                                                         .startsWith('http')
@@ -238,39 +252,37 @@ class _TransactionHistoryScreenState
                                                     width: 56,
                                                     height: 56,
                                                     fit: BoxFit.cover,
-                                                    errorBuilder: (_,
-                                                            __,
-                                                            ___) =>
+                                                    errorBuilder: (_, _, _) =>
                                                         Container(
-                                                      width: 56,
-                                                      height: 56,
-                                                      color: theme
-                                                          .dividerColor,
-                                                      child: const Icon(
-                                                          Icons
-                                                              .home_work_outlined,
-                                                          color: AppColors
-                                                              .primary),
-                                                    ))
+                                                          width: 56,
+                                                          height: 56,
+                                                          color: theme
+                                                              .dividerColor,
+                                                          child: const Icon(
+                                                            Icons
+                                                                .home_work_outlined,
+                                                            color: AppColors
+                                                                .primary,
+                                                          ),
+                                                        ),
+                                                  )
                                                 : Container(
                                                     width: 56,
                                                     height: 56,
-                                                    decoration:
-                                                        BoxDecoration(
-                                                      color: AppColors
-                                                          .primary
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors.primary
                                                           .withAlpha(
-                                                              (0.1 * 255)
-                                                                  .round()),
+                                                            (0.1 * 255).round(),
+                                                          ),
                                                       borderRadius:
-                                                          BorderRadius
-                                                              .circular(12),
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
                                                     ),
                                                     child: const Icon(
-                                                        Icons
-                                                            .home_work_outlined,
-                                                        color: AppColors
-                                                            .primary),
+                                                      Icons.home_work_outlined,
+                                                      color: AppColors.primary,
+                                                    ),
                                                   ),
                                           ),
                                           const SizedBox(width: 16),
@@ -282,13 +294,13 @@ class _TransactionHistoryScreenState
                                                 Text(
                                                   property['name'] ?? '-',
                                                   style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14,
-                                                      color: theme
-                                                          .textTheme
-                                                          .bodyMedium
-                                                          ?.color),
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                    color: theme
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.color,
+                                                  ),
                                                   maxLines: 1,
                                                   overflow:
                                                       TextOverflow.ellipsis,
@@ -297,21 +309,23 @@ class _TransactionHistoryScreenState
                                                 Text(
                                                   roomType['name'] ?? '-',
                                                   style: TextStyle(
-                                                      color: theme
-                                                          .textTheme
-                                                          .bodySmall
-                                                          ?.color,
-                                                      fontSize: 12),
+                                                    color: theme
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.color,
+                                                    fontSize: 12,
+                                                  ),
                                                 ),
                                                 const SizedBox(height: 2),
                                                 Text(
                                                   '${r['duration_value']} ${r['duration_type'] == 'monthly' ? 'Bulan' : 'Hari'} • mulai ${r['start_date']}',
                                                   style: TextStyle(
-                                                      color: theme
-                                                          .textTheme
-                                                          .bodySmall
-                                                          ?.color,
-                                                      fontSize: 11),
+                                                    color: theme
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.color,
+                                                    fontSize: 11,
+                                                  ),
                                                 ),
                                               ],
                                             ),
@@ -323,17 +337,23 @@ class _TransactionHistoryScreenState
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text('Total',
-                                              style: TextStyle(
-                                                  color: theme.textTheme
-                                                      .bodySmall?.color,
-                                                  fontSize: 12)),
+                                          Text(
+                                            'Total',
+                                            style: TextStyle(
+                                              color: theme
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.color,
+                                              fontSize: 12,
+                                            ),
+                                          ),
                                           Text(
                                             'Rp${(roomType['price'] ?? 0) * (r['duration_value'] ?? 1)}',
                                             style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                                color: AppColors.primary),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                              color: AppColors.primary,
+                                            ),
                                           ),
                                         ],
                                       ),
